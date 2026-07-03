@@ -1,9 +1,9 @@
 ```
 cd backend
 
-python -m venv .env
+python -m venv venv
 
-.\.env\Scripts\activate
+.\venv\Scripts\activate
 
 pip install -r requirements.txt
 

@@ -1,11 +1,20 @@
-# app FastAPI principal
-
 from fastapi import FastAPI
-from app.routers import health
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
-app.include_router(health.router)  # inclui endpoints de health
+from app.core.config import settings
+from app.api.routes import health
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+app = FastAPI(
+    title=settings.project_name,
+    version=settings.api_version,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(health.router, prefix=settings.api_prefix)
