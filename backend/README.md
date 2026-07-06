@@ -7,5 +7,7 @@ python -m venv venv
 
 pip install -r requirements.txt
 
+python -m app.db.seeds.seed_usuarios
+
 uvicorn app.main:app --reload
 ```

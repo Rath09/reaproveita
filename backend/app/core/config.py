@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     environment: str = "development"
     cors_origins: List[str] = ["http://localhost:5173"]
+    database_url: str = "sqlite:///./reaproveita.db"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
