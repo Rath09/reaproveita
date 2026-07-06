@@ -20,10 +20,11 @@ export const CATEGORIAS = [
   { id: 6, nome: 'Outros' },
 ]
 
-// Usuários de demonstração (o seletor de papel do topo alterna entre eles).
+// Usuários de demonstração (a tela de login aceita qualquer senha no mock).
+// E-mails no padrão do exemplo do contrato §2.
 export const USUARIOS = {
-  secretaria: { id: 1, nome: 'Ana Souza', papel: 'secretaria', secretaria_id: 2 }, // SMS
-  gestor: { id: 2, nome: 'Carlos Lima', papel: 'gestor', secretaria_id: null },
+  secretaria: { id: 1, nome: 'Ana Souza', email: 'ana@pmf.sc.gov.br', papel: 'secretaria', secretaria_id: 2 }, // SMS
+  gestor: { id: 2, nome: 'Carlos Lima', email: 'carlos@pmf.sc.gov.br', papel: 'gestor', secretaria_id: null },
 }
 
 // Campos por item (contrato §3.3): quantidade_reservada, saldo_livre e status

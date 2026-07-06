@@ -17,7 +17,9 @@ Abra o endereço que o Vite mostrar (normalmente http://localhost:5173).
 
 ## O que já funciona (com dados fictícios)
 
-- **Seletor de papel** Secretaria ↔ Gestor — muda a interface ao vivo.
+- **Login** (contrato §2) com sessão persistida — o papel do usuário (secretaria ou gestor)
+  muda a interface. No mock: `ana@pmf.sc.gov.br` (secretaria) ou `carlos@pmf.sc.gov.br`
+  (gestor), qualquer senha.
 - **Catálogo** com busca (nome ou patrimônio) e filtros por categoria e status.
 - **Fluxo de requisição**: Secretaria requisita → Gestor aprova/recusa → Gestor confirma a
   transferência. O item obedece à máquina de estados do contrato (`quantidade_reservada`,

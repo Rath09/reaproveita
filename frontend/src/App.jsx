@@ -1,13 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
-import { theme, brl } from './lib/theme.js'
+import { theme, btn, brl } from './lib/theme.js'
 import * as api from './data/api.js'
+import { getSessao } from './data/sessao.js'
 import Stat from './components/Stat.jsx'
+import LoginView from './features/auth/LoginView.jsx'
 import CatalogoView from './features/catalogo/CatalogoView.jsx'
 import RequisicoesView from './features/requisicoes/RequisicoesView.jsx'
 
 export default function App() {
-  const [papel, setPapel] = useState('secretaria') // 'secretaria' | 'gestor'
-  const [aba, setAba] = useState('catalogo')       // 'catalogo' | 'requisicoes'
+  // Sessão persistida: recarregar a página mantém o usuário logado
+  const [usuario, setUsuario] = useState(() => getSessao()?.usuario || null)
+  const [aba, setAba] = useState('catalogo') // 'catalogo' | 'requisicoes'
   const [filtro, setFiltro] = useState({ q: '', categoria_id: '', status: '' })
 
   const [secretarias, setSecretarias] = useState([])
@@ -16,25 +19,41 @@ export default function App() {
   const [requisicoes, setRequisicoes] = useState([])
   const [kpis, setKpis] = useState(null)
 
-  const usuario = api.getUsuario(papel)
+  const papel = usuario?.papel
 
-  // Referências (uma vez)
+  // Referências (uma vez por sessão — as rotas exigem token, contrato §2)
   useEffect(() => {
+    if (!usuario) return
     api.getSecretarias().then(setSecretarias)
     api.getCategorias().then(setCategorias)
-  }, [])
+  }, [usuario])
 
-  // Recarrega dados dependentes de filtro/papel
+  // Recarrega dados dependentes de filtro/usuário
   const recarregar = useCallback(async () => {
+    if (!usuario) return
     const [i, r, k] = await Promise.all([
       api.getItens(filtro),
       api.getRequisicoes(papel === 'secretaria' ? { secretaria_solicitante_id: usuario.secretaria_id } : {}),
       api.getKpis(),
     ])
     setItens(i); setRequisicoes(r); setKpis(k)
-  }, [filtro, papel, usuario.secretaria_id])
+  }, [filtro, papel, usuario])
 
   useEffect(() => { recarregar() }, [recarregar])
+
+  async function entrar(email, senha) {
+    const { usuario: logado } = await api.login(email, senha)
+    setUsuario(logado)
+  }
+
+  function sair() {
+    api.logout()
+    setUsuario(null)
+    setAba('catalogo')
+    setItens([]); setRequisicoes([]); setKpis(null)
+  }
+
+  if (!usuario) return <LoginView onEntrar={entrar} />
 
   async function requisitar(dados) {
     await api.criarRequisicao({ ...dados, secretaria_solicitante_id: usuario.secretaria_id })
@@ -45,6 +64,8 @@ export default function App() {
     await api.atualizarRequisicao(id, acao)
     await recarregar()
   }
+
+  const secretariaDoUsuario = secretarias.find((s) => s.id === usuario.secretaria_id)
 
   const abaBtn = (id, rotulo) => (
     <button
@@ -70,23 +91,11 @@ export default function App() {
             <div style={{ fontSize: 12, color: theme.color.inkSoft }}>Almoxarifado compartilhado · Prefeitura de Florianópolis</div>
           </div>
 
-          {/* Seletor de papel (demo): troca a interface ao vivo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
-              {usuario.nome} · {papel === 'secretaria' ? 'Secretaria de Saúde' : 'Gestor do almoxarifado'}
+              {usuario.nome} · {papel === 'gestor' ? 'Gestor do almoxarifado' : secretariaDoUsuario?.nome || 'Secretaria'}
             </span>
-            <div style={{ display: 'flex', border: `1px solid ${theme.color.line}`, borderRadius: 999, overflow: 'hidden' }}>
-              {['secretaria', 'gestor'].map((p) => (
-                <button key={p} onClick={() => setPapel(p)} style={{
-                  fontFamily: theme.font, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  padding: '7px 14px', border: 'none',
-                  background: papel === p ? theme.color.primary : theme.color.surface,
-                  color: papel === p ? '#fff' : theme.color.inkSoft,
-                }}>
-                  {p === 'secretaria' ? 'Secretaria' : 'Gestor'}
-                </button>
-              ))}
-            </div>
+            <button onClick={sair} style={{ ...btn('quieto'), padding: '6px 14px' }}>Sair</button>
           </div>
         </div>
       </header>

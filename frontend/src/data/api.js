@@ -11,6 +11,7 @@
 
 import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS } from './mock.js'
 import { http, dados, USAR_API } from './http.js'
+import { salvarSessao, limparSessao } from './sessao.js'
 
 // Estado em memória (cópia mutável dos seeds)
 let itens = ITENS.map((i) => ({ ...i }))
@@ -35,14 +36,25 @@ const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo }
 
 // =============================== AUTH ===============================
 
-export async function login(/* email, senha */) {
-  // Integração do login entra junto com a tela (POST /api/auth/login).
+// Retorno do contrato §2: { access_token, token_type, expires_in, usuario }.
+// A sessão fica persistida (sessao.js) e o http.js passa a enviar o Bearer.
+export async function login(email, senha) {
+  if (USAR_API) {
+    const resp = await http('/auth/login', { method: 'POST', body: { email, senha } })
+    salvarSessao(resp)
+    return resp
+  }
+
   await espera()
-  return { access_token: 'mock-token', usuario: USUARIOS.secretaria }
+  const usuario = Object.values(USUARIOS).find((u) => u.email === email.trim().toLowerCase())
+  if (!usuario || !senha) throw erro('NAO_AUTENTICADO', 'E-mail ou senha inválidos.') // espelha o 401
+  const resp = { access_token: 'mock-token', token_type: 'bearer', expires_in: 28800, usuario }
+  salvarSessao(resp)
+  return resp
 }
 
-export function getUsuario(papel) {
-  return USUARIOS[papel]
+export function logout() {
+  limparSessao()
 }
 
 // ============================ REFERÊNCIAS ============================
