@@ -43,10 +43,10 @@ src/
 
 ## Integração com o back-end
 
-Todo acesso a dados passa por **`src/data/api.js`**. Hoje as funções aplicam as regras do
-contrato sobre o mock em memória; quando os endpoints existirem, basta trocar o miolo de
-cada função pelo `fetch` real — os marcadores `// TODO: API` indicam o endpoint de cada uma
-(tabela completa no §10 do `CONTRATO_API.md`). O restante do front não muda.
+Todo acesso a dados passa por **`src/data/api.js`**. Cada função tem o ramo da API real
+(endpoints do `CONTRATO_API.md`, via `src/data/http.js`) e o ramo do mock em memória.
+A troca é pela flag `VITE_USE_API` no `.env` (copie de `.env.example`); sem `.env`, o
+front roda 100% no mock — a demo nunca depende do back estar no ar.
 
 ## Documentos da equipe
 

@@ -1,13 +1,16 @@
 // api.js — ÚNICO ponto de acesso a dados do front (regra do ORGANOGRAMA.md §2).
 //
-// Hoje: implementa as regras do CONTRATO_API.md em memória, sobre o mock.
-// Integração: trocar o miolo de cada função pelo fetch real do endpoint indicado
-// no comentário `// TODO: API`. O restante do front NÃO muda.
+// Cada função tem dois ramos:
+//   USAR_API=true  → endpoint real do CONTRATO_API.md (via http.js)
+//   USAR_API=false → mock em memória (padrão; demo continua viva sem o back)
+// A flag vem de VITE_USE_API no .env — ver .env.example. Integração é por função:
+// se um endpoint ainda não existir no back, dá para manter só ele no mock.
 //
-// A máquina de estados abaixo espelha o §5 do contrato de propósito:
+// A máquina de estados do mock espelha o §5 do contrato de propósito:
 // serve de referência visual para o back implementar o mesmo comportamento.
 
 import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS } from './mock.js'
+import { http, dados, USAR_API } from './http.js'
 
 // Estado em memória (cópia mutável dos seeds)
 let itens = ITENS.map((i) => ({ ...i }))
@@ -15,6 +18,9 @@ let requisicoes = REQUISICOES.map((r) => ({ ...r }))
 let proximoIdReq = requisicoes.length + 1
 
 const espera = (ms = 250) => new Promise((res) => setTimeout(res, ms)) // simula rede
+
+// PoC sem controle de paginação na UI: pede a página cheia (contrato §1)
+const PAGINA_CHEIA = { page: 1, page_size: 100 }
 
 // ---- derivação do §5: saldo_livre e status calculados, nunca gravados à mão ----
 function derivar(item) {
@@ -30,7 +36,7 @@ const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo }
 // =============================== AUTH ===============================
 
 export async function login(/* email, senha */) {
-  // TODO: API — POST /api/auth/login  (guardar access_token; enviar Authorization: Bearer)
+  // Integração do login entra junto com a tela (POST /api/auth/login).
   await espera()
   return { access_token: 'mock-token', usuario: USUARIOS.secretaria }
 }
@@ -42,13 +48,13 @@ export function getUsuario(papel) {
 // ============================ REFERÊNCIAS ============================
 
 export async function getSecretarias() {
-  // TODO: API — GET /api/secretarias
+  if (USAR_API) return dados(await http('/secretarias'))
   await espera(80)
   return SECRETARIAS
 }
 
 export async function getCategorias() {
-  // TODO: API — GET /api/categorias
+  if (USAR_API) return dados(await http('/categorias'))
   await espera(80)
   return CATEGORIAS
 }
@@ -56,7 +62,8 @@ export async function getCategorias() {
 // =============================== ITENS ===============================
 
 export async function getItens({ q = '', categoria_id = '', status = '' } = {}) {
-  // TODO: API — GET /api/itens?q=&categoria_id=&status=&page=&page_size=
+  if (USAR_API) return dados(await http('/itens', { query: { q, categoria_id, status, ...PAGINA_CHEIA } }))
+
   await espera()
   const termo = q.trim().toLowerCase()
   return itens.map(derivar).filter((i) => {
@@ -67,27 +74,37 @@ export async function getItens({ q = '', categoria_id = '', status = '' } = {}) 
   })
 }
 
-export async function criarItem(/* dados */) {
-  // TODO: API — POST /api/itens (papel: secretaria). Tela de cadastro: Sprint 1/2.
+export async function criarItem(dadosItem) {
+  // Contrato §3.3: body sem id/status/saldo_livre/quantidade_reservada/criado_em;
+  // secretaria_id vem do token. Tela de cadastro: Sprint 1/2.
+  if (USAR_API) return http('/itens', { method: 'POST', body: dadosItem })
   throw erro('NAO_IMPLEMENTADO', 'Cadastro de item entra na integração com o back.')
 }
 
 // ============================ REQUISIÇÕES ============================
 
-export async function getRequisicoes({ secretaria_solicitante_id = null } = {}) {
-  // TODO: API — GET /api/requisicoes?status=&secretaria_solicitante_id=
+export async function getRequisicoes({ secretaria_solicitante_id = null, status = '' } = {}) {
+  if (USAR_API) {
+    const lista = dados(await http('/requisicoes', { query: { status, secretaria_solicitante_id, ...PAGINA_CHEIA } }))
+    // O contrato não expande o item dentro da requisição — a UI precisa dele, então o front busca
+    const ids = [...new Set(lista.map((r) => r.item_id))]
+    const porId = new Map(await Promise.all(ids.map(async (id) => [id, await http(`/itens/${id}`)])))
+    return lista.map((r) => ({ ...r, item: porId.get(r.item_id) })).sort((a, b) => b.id - a.id)
+  }
+
   await espera()
   const lista = secretaria_solicitante_id
     ? requisicoes.filter((r) => r.secretaria_solicitante_id === secretaria_solicitante_id)
     : requisicoes
-  // join de conveniência para a UI (o back real pode devolver expandido ou o front busca o item)
   return lista
     .map((r) => ({ ...r, item: derivar(itens.find((i) => i.id === r.item_id)) }))
     .sort((a, b) => b.id - a.id)
 }
 
 export async function criarRequisicao({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id = null }) {
-  // TODO: API — POST /api/requisicoes
+  // Contrato §3.4: no back a secretaria solicitante vem do token, não do body
+  if (USAR_API) return http('/requisicoes', { method: 'POST', body: { item_id, quantidade, justificativa, intencao_id } })
+
   await espera()
   const item = itens.find((i) => i.id === item_id)
   if (!item) throw erro('NAO_ENCONTRADO', 'Item não encontrado.')
@@ -106,7 +123,8 @@ export async function criarRequisicao({ item_id, quantidade, justificativa, secr
 }
 
 export async function atualizarRequisicao(id, acao) {
-  // TODO: API — PATCH /api/requisicoes/:id  body: { acao }
+  if (USAR_API) return http(`/requisicoes/${id}`, { method: 'PATCH', body: { acao } })
+
   await espera()
   const req = requisicoes.find((r) => r.id === id)
   if (!req) throw erro('NAO_ENCONTRADO', 'Requisição não encontrada.')
@@ -137,25 +155,27 @@ export async function atualizarRequisicao(id, acao) {
 
 // ==================== INTERCEPTAÇÃO (Sprint 2 — Rafa) ====================
 
-export async function criarIntencao(/* dados */) {
-  // TODO: API — POST /api/intencoes (devolve { intencao, matches })
+export async function criarIntencao(dadosIntencao) {
+  // Devolve { intencao, matches } — matching síncrono (contrato §3.5)
+  if (USAR_API) return http('/intencoes', { method: 'POST', body: dadosIntencao })
   throw erro('NAO_IMPLEMENTADO', 'Interceptação de compra: telas na Sprint 2.')
 }
 
-export async function getMatches(/* intencaoId */) {
-  // TODO: API — GET /api/intencoes/:id/matches
+export async function getMatches(intencaoId) {
+  if (USAR_API) return http(`/intencoes/${intencaoId}/matches`)
   throw erro('NAO_IMPLEMENTADO', 'Interceptação de compra: telas na Sprint 2.')
 }
 
-export async function converterIntencao(/* intencaoId, itemId, quantidade */) {
-  // TODO: API — POST /api/intencoes/:id/converter
+export async function converterIntencao(intencaoId, item_id, quantidade) {
+  if (USAR_API) return http(`/intencoes/${intencaoId}/converter`, { method: 'POST', body: { item_id, quantidade } })
   throw erro('NAO_IMPLEMENTADO', 'Interceptação de compra: telas na Sprint 2.')
 }
 
 // =============================== KPIs ===============================
 
 export async function getKpis() {
-  // TODO: API — GET /api/kpis (autenticado) e GET /api/publico/kpis (painel público)
+  if (USAR_API) return http('/kpis')
+
   await espera(80)
   const transferidas = requisicoes.filter((r) => r.status === 'transferida')
   const compras_evitadas_valor = transferidas.reduce((soma, r) => {
