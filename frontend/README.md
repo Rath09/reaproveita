@@ -17,9 +17,9 @@ Abra o endereço que o Vite mostrar (normalmente http://localhost:5173).
 
 ## O que já funciona (com dados fictícios)
 
-- **Login** (contrato §2) com sessão persistida — o papel do usuário (secretaria ou gestor)
-  muda a interface. No mock: `ana@pmf.sc.gov.br` (secretaria) ou `carlos@pmf.sc.gov.br`
-  (gestor), qualquer senha.
+- **Login real** (contrato §2, `POST /api/auth/login`) com sessão persistida — o papel do
+  usuário (secretaria ou gestor) muda a interface. Usuários do seed do back:
+  `secretaria1@gmail.com` ou `gestor1@gmail.com`, senha `senha`.
 - **Catálogo** com busca (nome ou patrimônio) e filtros por categoria e status.
 - **Fluxo de requisição**: Secretaria requisita → Gestor aprova/recusa → Gestor confirma a
   transferência. O item obedece à máquina de estados do contrato (`quantidade_reservada`,
@@ -47,8 +47,10 @@ src/
 
 Todo acesso a dados passa por **`src/data/api.js`**. Cada função tem o ramo da API real
 (endpoints do `CONTRATO_API.md`, via `src/data/http.js`) e o ramo do mock em memória.
-A troca é pela flag `VITE_USE_API` no `.env` (copie de `.env.example`); sem `.env`, o
-front roda 100% no mock — a demo nunca depende do back estar no ar.
+O Set `FUNCOES_REAIS` em `api.js` lista o que já bate no back (auth, itens e requisições);
+o restante (secretarias, categorias, KPIs) segue no mock até os endpoints existirem.
+`VITE_USE_API=true` no `.env` força tudo para a API real; `VITE_API_URL` aponta o back
+(padrão `http://localhost:8000`). Copie de `.env.example`.
 
 ## Documentos da equipe
 

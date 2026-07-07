@@ -15,6 +15,20 @@ export const USAR_API = import.meta.env.VITE_USE_API === 'true'
 
 const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo })
 
+// O contrato (§6) define { erro: { codigo, mensagem } }, mas o back hoje devolve o
+// detail do FastAPI (string; lista no 422). Aceita os dois até o back alinhar —
+// detail com prefixo ITEM_INDISPONIVEL/TRANSICAO_INVALIDA vira o código do §6.
+function traduzirErro(status, json, caminho) {
+  if (json?.erro?.codigo) return erro(json.erro.codigo, json.erro.mensagem)
+  const detail = typeof json?.detail === 'string' ? json.detail : null
+  if (detail) {
+    const prefixo = ['ITEM_INDISPONIVEL', 'TRANSICAO_INVALIDA'].find((p) => detail.startsWith(p))
+    if (prefixo) return erro(prefixo, detail.slice(prefixo.length).replace(/^[:\s]+/, '') || detail)
+    return erro('ERRO', detail)
+  }
+  return erro('ERRO', `Erro ${status} em ${caminho}`)
+}
+
 export async function http(caminho, { method = 'GET', body, query } = {}) {
   const url = new URL(`/api${caminho}`, BASE_URL)
   for (const [chave, valor] of Object.entries(query || {})) {
@@ -35,8 +49,11 @@ export async function http(caminho, { method = 'GET', body, query } = {}) {
   const json = resp.status === 204 ? null : await resp.json().catch(() => null)
 
   if (!resp.ok) {
-    if (resp.status === 401) limparSessao() // token ausente/expirado — força novo login
-    throw erro(json?.erro?.codigo || 'ERRO', json?.erro?.mensagem || `Erro ${resp.status} em ${caminho}`)
+    if (resp.status === 401) {
+      limparSessao() // token ausente/expirado — força novo login
+      window.dispatchEvent(new Event('auth:expirada')) // o App escuta e volta para a tela de login
+    }
+    throw traduzirErro(resp.status, json, caminho)
   }
   return json
 }

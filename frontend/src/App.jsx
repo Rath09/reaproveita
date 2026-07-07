@@ -21,6 +21,13 @@ export default function App() {
 
   const papel = usuario?.papel
 
+  // Token expirado/inválido em qualquer chamada (401): volta para o login
+  useEffect(() => {
+    const aoExpirar = () => setUsuario(null)
+    window.addEventListener('auth:expirada', aoExpirar)
+    return () => window.removeEventListener('auth:expirada', aoExpirar)
+  }, [])
+
   // Referências (uma vez por sessão — as rotas exigem token, contrato §2)
   useEffect(() => {
     if (!usuario) return

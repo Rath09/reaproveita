@@ -41,9 +41,9 @@ Não há testes automatizados no PoC; a verificação é subir os dois servidore
 
 - Código e comentários em **português**; estilo inline com tokens de `src/lib/theme.js` (sem framework CSS).
 - `src/data/api.js` é o **único** ponto de acesso a dados — componentes nunca chamam `fetch`.
-- Integração por flag: `VITE_USE_API=true` no `.env` liga os endpoints reais; sem flag, roda
-  no mock em memória (`src/data/mock.js`, campos idênticos ao contrato). A troca é por função,
-  permitindo integrar endpoint a endpoint conforme o back entrega.
+- Integração por função: o Set `FUNCOES_REAIS` em `api.js` lista o que já bate no back real;
+  o resto roda no mock em memória (`src/data/mock.js`, campos idênticos ao contrato) até o
+  endpoint existir. `VITE_USE_API=true` no `.env` força tudo para a API real.
 - `src/data/http.js` — cliente fetch: monta URL com `VITE_API_URL`, envia Bearer token e
   converte o envelope de erro do contrato em `Error` com `.codigo`.
 - `src/data/sessao.js` — persistência do login (token + usuário) em `localStorage`.
