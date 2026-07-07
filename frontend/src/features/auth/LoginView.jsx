@@ -7,6 +7,8 @@ export default function LoginView({ onEntrar }) {
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [erroMsg, setErroMsg] = useState(null)
+  const [placeholderEmail, setPlaceholderEmail] = useState('nome@pmf.sc.gov.br')
+  const [placeholderSenha, setPlaceholderSenha] = useState('••••••••')
 
   async function enviar(e) {
     e.preventDefault()
@@ -32,13 +34,34 @@ export default function LoginView({ onEntrar }) {
         <form onSubmit={enviar} style={{ ...card, padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <label style={rotulo}>
             E-mail institucional
-            <input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="nome@pmf.sc.gov.br" style={{ ...input, width: '100%' }} />
+            <input
+              type="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={placeholderEmail}
+              onFocus={() => setPlaceholderEmail('')}
+              onBlur={() => {
+                if (email === '') setPlaceholderEmail('nome@pmf.sc.gov.br')
+              }}
+              style={{ ...input, width: '100%' }}
+            />
           </label>
           <label style={rotulo}>
             Senha
-            <input type="password" required value={senha} onChange={(e) => setSenha(e.target.value)}
-              placeholder="••••••••" style={{ ...input, width: '100%' }} />
+            <input
+              type="password"
+              required
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder={placeholderSenha}
+              onFocus={() => setPlaceholderSenha('')}
+              onBlur={() => {
+                if (senha === '') setPlaceholderSenha('••••••••')
+              }}
+              style={{ ...input, width: '100%'}}
+            />
           </label>
 
           <button type="submit" style={{ ...btn('primario'), width: '100%' }} disabled={enviando}>
