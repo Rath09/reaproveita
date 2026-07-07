@@ -17,3 +17,4 @@ class SecretariaUpdate(SQLModel):
 
 class SecretariaRead(SecretariaBase):
     id: int
+

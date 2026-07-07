@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
-from app.api.deps import get_session
+from app.api.deps import exigir_papel, get_session, get_usuario_atual
+from app.models.usuario import Usuario
 from app.core.exceptions import (
     ItemIndisponivelError,
     ItemNaoEncontradoError,
@@ -19,11 +20,11 @@ router = APIRouter(prefix="/requisicoes", tags=["requisicoes"])
 @router.post("", response_model=RequisicaoRead, status_code=201)
 def criar_requisicao(
     dados: RequisicaoCreate,
-    secretaria_solicitante_id: int = Query(..., description="TEMP: virá do JWT quando o Auth existir"),
+    usuario_atual: Usuario = Depends(get_usuario_atual),
     session: Session = Depends(get_session),
 ):
     try:
-        return service_requisicao.criar_requisicao(session, dados, secretaria_solicitante_id)
+        return service_requisicao.criar_requisicao(session, dados, usuario_atual.secretaria_id)
     except ItemNaoEncontradoError:
         raise HTTPException(status_code=404, detail="item não encontrado")
     except RequisicaoMesmaSecretariaError:
@@ -33,7 +34,7 @@ def criar_requisicao(
 
 
 @router.patch("/{requisicao_id}", response_model=RequisicaoRead)
-def executar_acao(requisicao_id: int, dados: RequisicaoAcao, session: Session = Depends(get_session)):
+def executar_acao(requisicao_id: int, dados: RequisicaoAcao, session: Session = Depends(get_session), usuario_atual: Usuario = Depends(exigir_papel("gestor"))):
     try:
         return service_requisicao.executar_acao(session, requisicao_id, dados.acao)
     except RequisicaoNaoEncontradaError:
@@ -51,11 +52,12 @@ def listar_requisicoes(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     status: StatusRequisicao | None = None,
-    secretaria_solicitante_id: int | None = None,
+    usuario_atual: Usuario = Depends(get_usuario_atual),
     session: Session = Depends(get_session),
 ):
-    requisicoes, total = service_requisicao.listar_requisicoes(
-        session, page, page_size, status, secretaria_solicitante_id
-    )
+    
+    # servidor só enxerga o que a própria secretaria pediu; admin (gestor) vê tudo
+    secretaria_filtro = None if usuario_atual.papel == "gestor" else usuario_atual.secretaria_id
+    requisicoes, total = service_requisicao.listar_requisicoes(session, page, page_size, status, secretaria_filtro)
     return PaginatedResponse(dados=requisicoes, total=total, page=page, page_size=page_size)
 

@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import EmailStr
 from sqlmodel import SQLModel, Field
 
-Papel = Literal["admin", "servidor", "dev"]
+Papel = Literal["gestor", "secretaria"]
 
 
 class UsuarioBase(SQLModel):
@@ -28,3 +28,4 @@ class UsuarioUpdate(SQLModel):
 class UsuarioRead(UsuarioBase):
     id: int
     # senha_hash nunca entra aqui — schema de saída não expõe hash
+

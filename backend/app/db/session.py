@@ -20,3 +20,4 @@ def habilitar_fk_sqlite(dbapi_connection, connection_record):
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+

@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
-from app.api.deps import get_session
+from app.api.deps import get_session, get_usuario_atual
 from app.core.exceptions import ItemNaoEncontradoError
 from app.schemas.common import PaginatedResponse
 from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
 from app.services import item as service_item
 
-router = APIRouter(prefix="/itens", tags=["itens"])
+router = APIRouter(prefix="/itens", tags=["itens"], dependencies=[Depends(get_usuario_atual)])
 
 
 @router.post("", response_model=ItemRead, status_code=201)

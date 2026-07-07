@@ -44,3 +44,4 @@ def atualizar_usuario(session: Session, usuario_id: int, dados: UsuarioUpdate) -
             raise EmailJaCadastradoError(dados_enviados["email"])
 
     return repo_usuario.atualizar(session, usuario, dados_enviados)
+

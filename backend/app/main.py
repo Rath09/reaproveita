@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, usuario, item, requisicao
+from app.api.routes import health, usuario, item, requisicao, auth
 from app.core.config import settings
 from app.db.session import create_db_and_tables
 
@@ -32,3 +32,4 @@ app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(usuario.router, prefix=settings.api_prefix)
 app.include_router(item.router, prefix=settings.api_prefix)
 app.include_router(requisicao.router, prefix=settings.api_prefix)
+app.include_router(auth.router, prefix=settings.api_prefix)

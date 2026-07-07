@@ -16,15 +16,13 @@ from app.core.security import hash_senha
 
 # lista simples de dicts — cada um vira 1 linha na tabela
 USUARIOS_SEED = [
-    {"nome": "Rodrigo Lopes", "email": "rodrigof.lops@gmail.com", "senha_hash": hash_senha("dev"), "papel": "dev", "secretaria_id": 1},
-    {"nome": "Rafael Rondon", "email": "rrmontebello@gmail.com", "senha_hash": hash_senha("dev"), "papel": "dev", "secretaria_id": 1},
-    {"nome": "Gabriel Leal", "email": "gabriellealrf@gmail.com", "senha_hash": hash_senha("dev"), "papel": "dev", "secretaria_id": 1},
-    {"nome": "Gestor 1", "email": "gestor1@gmail.com", "senha_hash": hash_senha("senha"), "papel": "admin", "secretaria_id": 2},
-    {"nome": "Servidor 1", "email": "servidor1@gmail.com", "senha_hash": hash_senha("senha"), "papel": "servidor", "secretaria_id": 2},
+    {"nome": "Gestor 1", "email": "gestor1@gmail.com", "senha_hash": hash_senha("senha"), "papel": "gestor", "secretaria_id": 1},
+    {"nome": "Secretaria 1", "email": "secretaria1@gmail.com", "senha_hash": hash_senha("senha"), "papel": "secretaria", "secretaria_id": 1},
+    {"nome": "Secretaria 2", "email": "secretaria2@gmail.com", "senha_hash": hash_senha("senha"), "papel": "secretaria", "secretaria_id": 2},
+    {"nome": "Secretaria 3", "email": "secretaria3@gmail.com", "senha_hash": hash_senha("senha"), "papel": "secretaria", "secretaria_id": 3},
 ]
 
 SECRETARIAS_SEED = [
-    {"nome": "Iauar", "sigla": "DEV"},
     {"nome": "Secretaria 1", "sigla": "SEC1"},
     {"nome": "Secretaria 2", "sigla": "SEC2"},
     {"nome": "Secretaria 3", "sigla": "SEC3"},

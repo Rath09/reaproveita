@@ -13,6 +13,10 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
+    jwt_secret_key: str = "poc-secret"  # sobrescreva via .env em qualquer ambiente compartilhado
+    jwt_algorithm: str = "HS256"
+    jwt_expire_seconds: int = 28800  # 8h, conforme §2 da doc
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def split_cors(cls, v):

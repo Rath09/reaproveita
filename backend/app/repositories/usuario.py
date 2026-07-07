@@ -38,3 +38,4 @@ def atualizar(session: Session, usuario: Usuario, dados: dict) -> Usuario:
     session.commit()
     session.refresh(usuario)
     return usuario
+

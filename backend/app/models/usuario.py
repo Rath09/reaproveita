@@ -8,3 +8,4 @@ class Usuario(SQLModel, table=True):
     senha_hash: str = Field(nullable=False)
     papel: str = Field(nullable=False)
     secretaria_id: int = Field(foreign_key="secretaria.id", ondelete="RESTRICT", index=True)
+

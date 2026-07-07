@@ -29,3 +29,7 @@ class TransicaoInvalidaError(Exception):
         self.acao = acao
         super().__init__(f"ação '{acao}' inválida para status '{status_atual}'")
 
+
+class CredenciaisInvalidasError(Exception):
+    """E-mail não existe ou senha não confere no login."""
+
