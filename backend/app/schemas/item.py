@@ -2,9 +2,11 @@ from typing import Literal
 from decimal import Decimal
 from datetime import datetime
 
+from pydantic import computed_field
 from sqlmodel import SQLModel
 
 EstadoConservacao = Literal["novo", "otimo", "bom", "regular", "ruim"]
+StatusItem = Literal["disponivel", "reservado", "transferido"]
 
 
 class ItemBase(SQLModel):
@@ -39,4 +41,18 @@ class ItemRead(ItemBase):
     id: int
     quantidade_reservada: int
     criado_em: datetime
+
+    @computed_field
+    @property
+    def saldo_livre(self) -> int:
+        return self.quantidade - self.quantidade_reservada
+
+    @computed_field
+    @property
+    def status(self) -> StatusItem:
+        if self.saldo_livre > 0:
+            return "disponivel"
+        if self.quantidade > 0:
+            return "reservado"
+        return "transferido"
 

@@ -4,3 +4,4 @@ from app.models.usuario import Usuario  # noqa: F401
 from app.models.secretaria import Secretaria  # noqa: F401
 from app.models.item import Item  # noqa: F401
 from app.models.categoria import Categoria  # noqa: F401
+from app.models.requisicao import Requisicao  # noqa: F401
