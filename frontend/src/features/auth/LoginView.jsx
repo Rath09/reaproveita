@@ -14,7 +14,7 @@ export default function LoginView({ onEntrar }) {
     e.preventDefault()
     setEnviando(true); setErroMsg(null)
     try {
-      await onEntrar(email, senha) // sucesso: o App troca a tela
+      await onEntrar(email, senha)
     } catch (err) {
       setErroMsg(err.message)
       setEnviando(false)
