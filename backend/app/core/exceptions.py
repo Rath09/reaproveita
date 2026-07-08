@@ -37,3 +37,7 @@ class CredenciaisInvalidasError(Exception):
 class SemPermissaoSecretariaError(Exception):
     """Não tem permissão na secretaria alvo"""
 
+
+class QuantidadeAbaixoDaReservadaError(Exception):
+    """Quantidade de itens abaixo da quantidade reservada"""
+

@@ -123,7 +123,13 @@ _ACOES = {
 
 def executar_acao(session: Session, requisicao_id: int, acao: str, secretaria_id: int) -> Requisicao:
     requisicao = obter_requisicao(session, requisicao_id)
-    if requisicao.secretaria_solicitante_id != secretaria_id:
-        raise SemPermissaoSecretariaError(requisicao.secretaria_solicitante_id)
+
+    item = repo_item.buscar_por_id(session, requisicao.item_id)
+    if item is None:
+        raise ItemNaoEncontradoError(requisicao.item_id)
+
+    if item.secretaria_id != secretaria_id:
+        raise SemPermissaoSecretariaError(item.secretaria_id)
+
     return _ACOES[acao](session, requisicao_id)
 

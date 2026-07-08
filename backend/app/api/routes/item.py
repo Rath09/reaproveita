@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.api.deps import get_session, get_usuario_atual
-from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError
+from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError, QuantidadeAbaixoDaReservadaError
 from app.schemas.common import PaginatedResponse
 from app.schemas.item import ItemCreate, ItemRead, ItemUpdate
 from app.services import item as service_item
@@ -55,4 +55,6 @@ def atualizar_item(
         raise HTTPException(status_code=404, detail="item não encontrado")
     except SemPermissaoSecretariaError as erro:
         raise HTTPException(status_code=403, detail=f"sem permissão para editar item da secretaria {erro}")
+    except QuantidadeAbaixoDaReservadaError:
+        raise HTTPException(status_code=409, detail=f"quantidade abaixa da reservada")
     

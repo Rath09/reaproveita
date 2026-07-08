@@ -21,7 +21,7 @@ router = APIRouter(prefix="/requisicoes", tags=["requisicoes"], dependencies=[De
 @router.post("", response_model=RequisicaoRead, status_code=201)
 def criar_requisicao(
     dados: RequisicaoCreate,
-    usuario_atual: Usuario = Depends(get_usuario_atual),
+    usuario_atual: Usuario = Depends(exigir_papel("secretaria")),
     session: Session = Depends(get_session),
 ):
     try:
@@ -63,7 +63,7 @@ def listar_requisicoes(
     usuario_atual: Usuario = Depends(get_usuario_atual),
     session: Session = Depends(get_session),
 ):
-    #secretaria_filtro = None if usuario_atual.papel == "gestor" else usuario_atual.secretaria_id
-    requisicoes, total = service_requisicao.listar_requisicoes(session, page, page_size, status, usuario_atual.secretaria_id)
+    secretaria_filtro = None if usuario_atual.papel == "gestor" else usuario_atual.secretaria_id
+    requisicoes, total = service_requisicao.listar_requisicoes(session, page, page_size, status, secretaria_filtro)
     return PaginatedResponse(dados=requisicoes, total=total, page=page, page_size=page_size)
 

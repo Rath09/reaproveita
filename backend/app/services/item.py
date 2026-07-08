@@ -1,6 +1,6 @@
 from sqlmodel import Session
 
-from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError
+from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError, QuantidadeAbaixoDaReservadaError
 from app.models.item import Item
 from app.repositories import item as repo_item
 from app.schemas.item import ItemCreate, ItemUpdate
@@ -26,9 +26,17 @@ def listar_itens(session: Session, page: int, page_size: int) -> tuple[list[Item
 
 
 def atualizar_item(session: Session, item_id: int, dados: ItemUpdate, secretaria_id: int) -> Item:
-    item = obter_item(session, item_id)  # já lança ItemNaoEncontradoError
+    item = obter_item(session, item_id)
     if item.secretaria_id != secretaria_id:
         raise SemPermissaoSecretariaError(item.secretaria_id)
+
     dados_enviados = dados.model_dump(exclude_unset=True)
+
+    nova_quantidade = dados_enviados.get("quantidade")
+    if nova_quantidade is None:
+        nova_quantidade = item.quantidade
+    if nova_quantidade < item.quantidade_reservada:
+        raise QuantidadeAbaixoDaReservadaError(item.quantidade_reservada)
+
     return repo_item.atualizar(session, item, dados_enviados)
 
