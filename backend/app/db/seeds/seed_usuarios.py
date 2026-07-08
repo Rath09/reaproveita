@@ -26,12 +26,18 @@ USUARIOS_SEED = [
 ]
 
 SECRETARIAS_SEED = [
-    {"nome": "Secretaria 1", "sigla": "SEC1"},
-    {"nome": "Secretaria 2", "sigla": "SEC2"},
-    {"nome": "Secretaria 3", "sigla": "SEC3"},
-    {"nome": "Secretaria 4", "sigla": "SEC4"},
-    {"nome": "Secretaria 5", "sigla": "SEC5"},
-    {"nome": "Secretaria 6", "sigla": "SEC6"},
+    {"nome": "Secretaria de Administração", "sigla": "SEAD"},
+    {"nome": "Secretaria de Educação", "sigla": "SEDUC"},
+    {"nome": "Secretaria de Saúde", "sigla": "SESA"},
+    {"nome": "Secretaria da Fazenda", "sigla": "SEFAZ"},
+    {"nome": "Secretaria de Segurança Pública", "sigla": "SESP"},
+    {"nome": "Secretaria de Infraestrutura", "sigla": "SEINFRA"},
+    {"nome": "Secretaria de Meio Ambiente", "sigla": "SEMA"},
+    {"nome": "Secretaria de Agricultura", "sigla": "SEAG"},
+    {"nome": "Secretaria de Assistência Social", "sigla": "SEAS"},
+    {"nome": "Secretaria de Cultura", "sigla": "SECULT"},
+    {"nome": "Secretaria de Esporte e Lazer", "sigla": "SEEL"},
+    {"nome": "Secretaria de Desenvolvimento Econômico", "sigla": "SEDEC"},
 ]
 
 CATEGORIAS_SEED = [
