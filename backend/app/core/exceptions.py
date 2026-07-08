@@ -33,3 +33,7 @@ class TransicaoInvalidaError(Exception):
 class CredenciaisInvalidasError(Exception):
     """E-mail não existe ou senha não confere no login."""
 
+
+class SemPermissaoSecretariaError(Exception):
+    """Não tem permissão na secretaria alvo"""
+

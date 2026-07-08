@@ -14,7 +14,7 @@ class ItemBase(SQLModel):
     descricao: str
     patrimonio: str
     categoria_id: int
-    secretaria_id: int
+    #secretaria_id: int  # pegar direto pelo token, sem brecha pra preencher secretaria_id que não pertence
     quantidade: int
     estado_conservacao: EstadoConservacao
     valor_unitario_estimado: Decimal
@@ -30,7 +30,7 @@ class ItemUpdate(SQLModel):
     descricao: str | None = None
     patrimonio: str | None = None
     categoria_id: int | None = None
-    secretaria_id: int | None = None
+    #secretaria_id: int | None = None  # impossibilita mover item para outra secretaria - somente por requisicao
     quantidade: int | None = None
     estado_conservacao: EstadoConservacao | None = None
     valor_unitario_estimado: Decimal | None = None
@@ -39,6 +39,7 @@ class ItemUpdate(SQLModel):
 
 class ItemRead(ItemBase):
     id: int
+    secretaria_id: int
     quantidade_reservada: int
     criado_em: datetime
 

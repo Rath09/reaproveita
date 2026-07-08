@@ -20,13 +20,13 @@ def buscar_por_email(session: Session, email: str) -> Usuario | None:
     return session.exec(statement).first()
 
 
-def listar(session: Session, offset: int, limit: int) -> list[Usuario]:
-    statement = select(Usuario).offset(offset).limit(limit)
+def listar(session: Session, offset: int, limit: int, secretaria_id: int) -> list[Usuario]:
+    statement = select(Usuario).where(Usuario.secretaria_id == secretaria_id).offset(offset).limit(limit)
     return list(session.exec(statement).all())
 
 
-def contar_total(session: Session) -> int:
-    statement = select(func.count()).select_from(Usuario)
+def contar_total(session: Session, secretaria_id: int) -> int:
+    statement = select(func.count()).select_from(Usuario).where(Usuario.secretaria_id == secretaria_id)
     return session.exec(statement).one()
 
 

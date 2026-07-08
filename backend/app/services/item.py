@@ -1,13 +1,13 @@
 from sqlmodel import Session
 
-from app.core.exceptions import ItemNaoEncontradoError
+from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError
 from app.models.item import Item
 from app.repositories import item as repo_item
 from app.schemas.item import ItemCreate, ItemUpdate
 
 
-def criar_item(session: Session, dados: ItemCreate) -> Item:
-    item = Item(**dados.model_dump())  # quantidade_reservada usa o default=0 do model, criado_em usa default_factory
+def criar_item(session: Session, dados: ItemCreate, secretaria_id: int) -> Item:
+    item = Item(**dados.model_dump(), secretaria_id=secretaria_id)  # quantidade_reservada usa o default=0 do model, criado_em usa default_factory
     return repo_item.inserir(session, item)
 
 
@@ -25,8 +25,10 @@ def listar_itens(session: Session, page: int, page_size: int) -> tuple[list[Item
     return itens, total
 
 
-def atualizar_item(session: Session, item_id: int, dados: ItemUpdate) -> Item:
+def atualizar_item(session: Session, item_id: int, dados: ItemUpdate, secretaria_id: int) -> Item:
     item = obter_item(session, item_id)  # já lança ItemNaoEncontradoError
+    if item.secretaria_id != secretaria_id:
+        raise SemPermissaoSecretariaError(item.secretaria_id)
     dados_enviados = dados.model_dump(exclude_unset=True)
     return repo_item.atualizar(session, item, dados_enviados)
 

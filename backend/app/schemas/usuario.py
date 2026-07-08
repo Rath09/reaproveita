@@ -10,7 +10,7 @@ class UsuarioBase(SQLModel):
     nome: str
     email: EmailStr
     papel: Papel
-    secretaria_id: int
+    #secretaria_id: int  # pegar direto pelo token, sem brecha pra preencher secretaria_id que não pertence
 
 
 class UsuarioCreate(UsuarioBase):
@@ -21,11 +21,12 @@ class UsuarioUpdate(SQLModel):
     nome: str | None = None
     email: EmailStr | None = None
     papel: Papel | None = None
-    secretaria_id: int | None = None
+    #secretaria_id: int | None = None  # impossibilita mover usuario para outra secretaria
     senha: str | None = Field(default=None, min_length=8)
 
 
 class UsuarioRead(UsuarioBase):
     id: int
+    secretaria_id: int
     # senha_hash nunca entra aqui — schema de saída não expõe hash
 

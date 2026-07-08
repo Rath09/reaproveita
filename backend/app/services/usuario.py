@@ -1,37 +1,39 @@
 from sqlmodel import Session
 
-from app.core.exceptions import EmailJaCadastradoError, UsuarioNaoEncontradoError
+from app.core.exceptions import EmailJaCadastradoError, UsuarioNaoEncontradoError, SemPermissaoSecretariaError
 from app.core.security import hash_senha
 from app.models.usuario import Usuario
 from app.repositories import usuario as repo_usuario
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate
 
 
-def criar_usuario(session: Session, dados: UsuarioCreate) -> Usuario:
+def criar_usuario(session: Session, dados: UsuarioCreate, secretaria_id: int) -> Usuario:
     if repo_usuario.buscar_por_email(session, dados.email) is not None:
         raise EmailJaCadastradoError(dados.email)
 
     dados_usuario = dados.model_dump(exclude={"senha"})
-    usuario = Usuario(**dados_usuario, senha_hash=hash_senha(dados.senha))
+    usuario = Usuario(**dados_usuario, secretaria_id=secretaria_id, senha_hash=hash_senha(dados.senha))
     return repo_usuario.inserir(session, usuario)
 
 
-def obter_usuario(session: Session, usuario_id: int) -> Usuario:
+def obter_usuario(session: Session, usuario_id: int, secretaria_id: int) -> Usuario:
     usuario = repo_usuario.buscar_por_id(session, usuario_id)
     if usuario is None:
         raise UsuarioNaoEncontradoError(usuario_id)
+    if usuario.secretaria_id != secretaria_id:
+        raise SemPermissaoSecretariaError(usuario.secretaria_id)
     return usuario
 
 
-def listar_usuarios(session: Session, page: int, page_size: int) -> tuple[list[Usuario], int]:
+def listar_usuarios(session: Session, page: int, page_size: int, secretaria_id: int) -> tuple[list[Usuario], int]:
     offset = (page - 1) * page_size
-    usuarios = repo_usuario.listar(session, offset, page_size)
-    total = repo_usuario.contar_total(session)
+    usuarios = repo_usuario.listar(session, offset, page_size, secretaria_id)
+    total = repo_usuario.contar_total(session, secretaria_id)
     return usuarios, total
 
 
-def atualizar_usuario(session: Session, usuario_id: int, dados: UsuarioUpdate) -> Usuario:
-    usuario = obter_usuario(session, usuario_id)  # já lança UsuarioNaoEncontradoError
+def atualizar_usuario(session: Session, usuario_id: int, dados: UsuarioUpdate, secretaria_id: int) -> Usuario:
+    usuario = obter_usuario(session, usuario_id, secretaria_id)  # já lança UsuarioNaoEncontradoError
 
     dados_enviados = dados.model_dump(exclude_unset=True)  # só o que o cliente mandou
 

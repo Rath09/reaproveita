@@ -8,6 +8,7 @@ from app.core.exceptions import (
     RequisicaoMesmaSecretariaError,
     RequisicaoNaoEncontradaError,
     TransicaoInvalidaError,
+    SemPermissaoSecretariaError,
 )
 from app.models.item import Item
 from app.models.requisicao import Requisicao
@@ -110,7 +111,6 @@ def confirmar_transferencia(session: Session, requisicao_id: int) -> Requisicao:
         },
     )
     # status do item é recalculado sozinho no ItemRead (computed_field) — nada a fazer aqui
-    # KPI (soma de item remanejado) fica de fora — feature separada, entra quando o Gabriel montar KPIs
     return _marcar_atualizada(session, requisicao, "transferida")
 
 
@@ -121,6 +121,9 @@ _ACOES = {
 }
 
 
-def executar_acao(session: Session, requisicao_id: int, acao: str) -> Requisicao:
+def executar_acao(session: Session, requisicao_id: int, acao: str, secretaria_id: int) -> Requisicao:
+    requisicao = obter_requisicao(session, requisicao_id)
+    if requisicao.secretaria_solicitante_id != secretaria_id:
+        raise SemPermissaoSecretariaError(requisicao.secretaria_solicitante_id)
     return _ACOES[acao](session, requisicao_id)
 
