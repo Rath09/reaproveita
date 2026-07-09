@@ -20,5 +20,5 @@ Abra o endereço que aparecer no terminal (normalmente http://127.0.0.1:8000).
 
 ## Documentação
 
-Gerada automaticamente com Swagger (http://127.0.0.1:8000/docs)\
+Gerada automaticamente com Swagger (http://127.0.0.1:8000/docs) \
 Todos os endpoints estão documentados e com resposta padronizada.
