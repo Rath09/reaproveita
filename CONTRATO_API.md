@@ -1,6 +1,6 @@
 # Contrato de API — Reaproveita (PoC)
 
-**Versão 1.0 — 02/07/2026 · Artefato do Dia 3 (checkpoint interno)**
+**Versão 1.1 — 10/07/2026 · Artefato do Dia 3 (checkpoint interno)**
 **Stack:** FastAPI + SQLite (back) · React/Vite (front, camada `src/data/api.js`)
 
 Este documento é a **fonte da verdade** da integração. O Swagger gerado pelo FastAPI (`/docs`) deve refletir exatamente o que está aqui; divergências se resolvem **editando este arquivo primeiro** e avisando no canal da equipe. Nomes de campos daqui prevalecem sobre `mock.js` — ajustar o mock se divergir.
@@ -28,7 +28,7 @@ Objeto usuário:
 ```json
 { "id": 1, "nome": "Ana Souza", "email": "ana@pmf.sc.gov.br", "papel": "secretaria", "secretaria_id": 3 }
 ```
-`papel = "gestor"` tem `secretaria_id: null` e enxerga tudo.
+`papel = "gestor"` tem `secretaria_id` da secretaria cujo almoxarifado administra: enxerga todas as requisições, mas só executa as ações do §5 sobre requisições de itens da própria secretaria.
 
 ## 3. Recursos e endpoints
 
@@ -93,7 +93,7 @@ Objeto:
 Endpoints:
 - `POST /api/requisicoes` (secretaria) — `{ item_id, quantidade, justificativa, intencao_id? }` → `201`.
   Valida `quantidade <= saldo_livre` → senão `409 ITEM_INDISPONIVEL`. Não pode requisitar item da própria secretaria → `400`.
-- `PATCH /api/requisicoes/{id}` (gestor) — `{ "acao": "aprovar" | "recusar" | "confirmar_transferencia" }`. Transição fora de ordem → `409 TRANSICAO_INVALIDA`.
+- `PATCH /api/requisicoes/{id}` (gestor da secretaria dona do item — outro gestor recebe 403 SEM_PERMISSAO) — `{ "acao": "aprovar" | "recusar" | "confirmar_transferencia" }`. Transição fora de ordem → `409 TRANSICAO_INVALIDA`.
 - `GET /api/requisicoes` — filtros `status`, `secretaria_solicitante_id` + paginação. Papel secretaria só enxerga as próprias; gestor enxerga todas.
 
 ### 3.5 Intenções de compra (interceptação)
@@ -155,6 +155,10 @@ Requisição: `pendente → aprovada → transferida`; `pendente → recusada`. 
 | `confirmar_transferencia` | status `aprovada` | `quantidade -= q`; `quantidade_reservada -= q`; recalcula `status` do item; soma no KPI |
 
 Criar requisição **não** reserva saldo — a reserva acontece na aprovação. Se duas pendentes disputam o mesmo saldo, a segunda aprovação falha com `409`.
+
+### 5.1 Modelo de iniciação — nota de validação (10/07)
+
+Entrevista no CEART revelou fluxo invertido ao desta seção: só a gestora principal opera o sistema, e é quem tem o excedente que inicia a transferência para outro local (o pedido é combinado por fora do sistema), aguardando autorização dentro dele. O PoC mantém o fluxo solicitante→aprovação deste contrato; a inversão (transferência iniciada pelo dono, direcionada a uma secretaria) é suportada pelo mesmo domínio (§3.4 + §5) e será decidida com o demandante até 25/07. Citar como flexibilidade no pitch (§9).
 
 ## 6. Erros
 
