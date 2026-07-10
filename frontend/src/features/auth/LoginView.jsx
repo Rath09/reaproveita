@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { theme, card, btn, input } from '../../lib/theme.js'
+import { MOCK_TOTAL } from '../../data/http.js'
 
 // Tela de login (contrato §2). Usuários vêm de seed — não há cadastro público no PoC.
 export default function LoginView({ onEntrar }) {
@@ -74,7 +75,11 @@ export default function LoginView({ onEntrar }) {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: 12, color: theme.color.inkSoft, marginTop: 14 }}>
-          Demonstração (seed): <strong>secretaria1@gmail.com</strong> ou <strong>gestor1@gmail.com</strong> · senha <strong>senha</strong>
+          {MOCK_TOTAL ? (
+            <>Demo: <strong>ana@pmf.sc.gov.br</strong> (Secretaria) ou <strong>carlos@pmf.sc.gov.br</strong> (Gestor) — qualquer senha</>
+          ) : (
+            <>Demonstração (seed): <strong>secretaria1@gmail.com</strong> ou <strong>gestor1@gmail.com</strong> · senha <strong>senha</strong></>
+          )}
         </p>
       </div>
     </div>

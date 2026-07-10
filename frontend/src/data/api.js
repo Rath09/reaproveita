@@ -9,11 +9,11 @@
 // serve de referência visual para o back implementar o mesmo comportamento.
 
 import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS } from './mock.js'
-import { http, dados, USAR_API } from './http.js'
+import { http, dados, USAR_API, MOCK_TOTAL } from './http.js'
 import { salvarSessao, limparSessao } from './sessao.js'
 
 const FUNCOES_REAIS = new Set(['login', 'getItens', 'criarItem', 'getRequisicoes', 'criarRequisicao', 'atualizarRequisicao'])
-const real = (fn) => USAR_API || FUNCOES_REAIS.has(fn)
+const real = (fn) => !MOCK_TOTAL && (USAR_API || FUNCOES_REAIS.has(fn))
 
 // Estado em memória (cópia mutável dos seeds)
 let itens = ITENS.map((i) => ({ ...i }))

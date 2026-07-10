@@ -13,6 +13,10 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 // entra por função quando VITE_USE_API=true no .env.
 export const USAR_API = import.meta.env.VITE_USE_API === 'true'
 
+// Flag de demo pública: força 100% mock mesmo nas funções já integradas ao back
+// (ex.: painel de transparência hospedado sem back no ar). Tem prioridade sobre USAR_API.
+export const MOCK_TOTAL = import.meta.env.VITE_FORCE_MOCK === 'true'
+
 const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo })
 
 // O contrato (§6) define { erro: { codigo, mensagem } }, mas o back hoje devolve o
