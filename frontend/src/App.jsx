@@ -7,8 +7,13 @@ import LoginView from './features/auth/LoginView.jsx'
 import CatalogoView from './features/catalogo/CatalogoView.jsx'
 import RequisicoesView from './features/requisicoes/RequisicoesView.jsx'
 import InterceptacaoView from './features/interceptacao/InterceptacaoView.jsx'
+import PainelPublicoView from './features/publico/PainelPublicoView.jsx'
 
 export default function App() {
+  // Rota pública por hash (#/publico) — não exige login, checada antes do guard
+  const [rota, setRota] = useState(window.location.hash)
+  const [kpisPublico, setKpisPublico] = useState(null)
+
   // Sessão persistida: recarregar a página mantém o usuário logado
   const [usuario, setUsuario] = useState(() => getSessao()?.usuario || null)
   const [aba, setAba] = useState('catalogo') // 'catalogo' | 'requisicoes' | 'interceptacao'
@@ -21,6 +26,17 @@ export default function App() {
   const [kpis, setKpis] = useState(null)
 
   const papel = usuario?.papel
+
+  useEffect(() => {
+    const aoMudarHash = () => setRota(window.location.hash)
+    window.addEventListener('hashchange', aoMudarHash)
+    return () => window.removeEventListener('hashchange', aoMudarHash)
+  }, [])
+
+  useEffect(() => {
+    if (rota !== '#/publico') return
+    api.getKpisPublico().then(setKpisPublico)
+  }, [rota])
 
   // Token expirado/inválido em qualquer chamada (401): volta para o login
   useEffect(() => {
@@ -61,6 +77,7 @@ export default function App() {
     setItens([]); setRequisicoes([]); setKpis(null)
   }
 
+  if (rota === '#/publico') return <PainelPublicoView kpis={kpisPublico} />
   if (!usuario) return <LoginView onEntrar={entrar} />
 
   async function requisitar(dados) {
@@ -176,7 +193,7 @@ export default function App() {
       </main>
 
       <footer style={{ textAlign: 'center', padding: '0 20px 28px', fontSize: 12, color: theme.color.inkSoft }}>
-        Protótipo (TRL3) com dados fictícios · Jornada Incubintech 2026
+        Protótipo (TRL3) com dados fictícios · Jornada Incubintech 2026 · <a href="#/publico" style={{ color: 'inherit' }}>Painel público</a>
       </footer>
     </div>
   )
