@@ -22,6 +22,12 @@ export const CATEGORIAS = [
 
 // Usuários de demonstração (a tela de login aceita qualquer senha no mock).
 // E-mails no padrão do exemplo do contrato §2.
+//
+// NOTA CONSCIENTE: Carlos (gestor) segue com secretaria_id: null, ou seja, aprova
+// requisição de qualquer secretaria — diverge do RBAC por secretaria do contrato
+// v1.1 (§2/§3.4: gestor só age sobre itens da própria secretaria). É simplificação
+// deliberada da demo pública (um único gestor de demo, sem back para validar RBAC
+// real); o back real já implementa o RBAC correto.
 export const USUARIOS = {
   secretaria: { id: 1, nome: 'Ana Souza', email: 'ana@pmf.sc.gov.br', papel: 'secretaria', secretaria_id: 2 }, // SMS
   gestor: { id: 2, nome: 'Carlos Lima', email: 'carlos@pmf.sc.gov.br', papel: 'gestor', secretaria_id: null },
