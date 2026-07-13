@@ -28,6 +28,9 @@ export const theme = {
     aprovada:    { bg: '#DFF0E7', fg: '#10513A' },
     recusada:    { bg: '#F6E3E1', fg: '#8F332A' },
     transferida: { bg: '#E5E7EB', fg: '#4B5563' },
+    aberta:         { bg: '#E3EBF8', fg: '#1D4ED8' },
+    convertida:     { bg: '#DFF0E7', fg: '#10513A' },
+    mantida_compra: { bg: '#F7ECD8', fg: '#8A5B14' },
   },
 
   radius: { card: 12, control: 8 },
@@ -73,4 +76,8 @@ export const rotuloStatusItem = {
 
 export const rotuloStatusReq = {
   pendente: 'Pendente', aprovada: 'Aprovada', recusada: 'Recusada', transferida: 'Transferida',
+}
+
+export const rotuloStatusIntencao = {
+  aberta: 'Aberta', convertida: 'Convertida', mantida_compra: 'Compra mantida',
 }
