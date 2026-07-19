@@ -6,38 +6,30 @@ from sqlmodel import Session, select
 from app.models.item import Item
 from app.models.requisicao import Requisicao
 
---COMPRAS EVITADAS KPI
-SELECT COALESCE(SUM(requisicao.quantidade * item.valor_unitario_estimado), 0) AS total
-FROM requisicao
-JOIN item ON item.id = requisicao.item_id
-WHERE requisicao.status = 'transferida'
 
---ITENS TRANSFERIDOS KPI
+def compras_evitadas_valor(session: Session) -> Decimal:
+    """
+    Soma quantidade * valor_unitario sobre transferências confirmadas.
+    Doc pede 'valor da intenção vinculada quando existir; senão, do item' —
+    como intenção não existe ainda, sempre cai no valor do item.
+    """
+    statement = (
+        select(func.sum(Requisicao.quantidade * Item.valor_unitario_estimado))
+        .join(Item, Item.id == Requisicao.item_id)
+        .where(Requisicao.status == "transferida")
+    )
+    resultado = session.exec(statement).one()
+    return resultado if resultado is not None else Decimal("0.00")
 
-SELECT COUNT(*) AS total
-FROM requisicao
-WHERE requisicao.status = 'transferida';
 
---REQUISIÇÕES CONCLUIDAS KPI
+def itens_transferidos(session: Session) -> int:
+    """Soma de quantidade (unidades físicas movidas), não contagem de requisições."""
+    statement = select(func.sum(Requisicao.quantidade)).where(Requisicao.status == "transferida")
+    resultado = session.exec(statement).one()
+    return resultado if resultado is not None else 0
 
-SELECT COUNT(*) AS total
-FROM requisicao
-WHERE requisicao.status = 'transferida';
 
--- INTENÇAO TOTAL
-
-SELECT COUNT(*) AS total
-FROM intencao;
-
---ITENÇÃO CONVERTIDA
-
-SELECT COUNT(*) AS total
-FROM intencao
-WHERE status = 'convertida';
-
--- TAXA DE INTENÇÃO
-
-SELECT CASE WHEN COUNT(*) = 0 THEN 0.0
-       ELSE CAST(SUM(CASE WHEN status = 'convertida' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)
-       END AS taxa
-FROM intencao;
+def requisicoes_concluidas(session: Session) -> int:
+    """Contagem de requisições (pedidos), diferente de itens_transferidos (unidades)."""
+    statement = select(func.count()).where(Requisicao.status == "transferida")
+    return session.exec(statement).one()

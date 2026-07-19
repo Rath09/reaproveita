@@ -17,4 +17,3 @@ def obter_kpis(session: Session = Depends(get_session)):
 @router_publico.get("/kpis", response_model=KpiResponse)
 def obter_kpis_publico(session: Session = Depends(get_session)):
     return service_kpi.calcular_kpis(session)
-
