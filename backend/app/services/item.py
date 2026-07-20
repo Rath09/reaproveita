@@ -3,7 +3,7 @@ from sqlmodel import Session
 from app.core.exceptions import ItemNaoEncontradoError, SemPermissaoSecretariaError, QuantidadeAbaixoDaReservadaError
 from app.models.item import Item
 from app.repositories import item as repo_item
-from app.schemas.item import ItemCreate, ItemUpdate
+from app.schemas.item import ItemCreate, ItemUpdate, FiltrosItem
 
 
 def criar_item(session: Session, dados: ItemCreate, secretaria_id: int) -> Item:
@@ -18,10 +18,12 @@ def obter_item(session: Session, item_id: int) -> Item:
     return item
 
 
-def listar_itens(session: Session, page: int, page_size: int) -> tuple[list[Item], int]:
+def listar_itens(
+    session: Session, page: int, page_size: int, filtros: FiltrosItem
+) -> tuple[list[Item], int]:
     offset = (page - 1) * page_size
-    itens = repo_item.listar(session, offset, page_size)
-    total = repo_item.contar_total(session)
+    itens = repo_item.listar(session, offset, page_size, filtros)
+    total = repo_item.contar_total(session, filtros)
     return itens, total
 
 

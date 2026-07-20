@@ -9,6 +9,19 @@ EstadoConservacao = Literal["novo", "otimo", "bom", "regular", "ruim"]
 StatusItem = Literal["disponivel", "reservado", "transferido"]
 
 
+
+from dataclasses import dataclass
+
+@dataclass
+class FiltrosItem:
+    q: str | None = None
+    categoria_id: int | None = None
+    estado_conservacao: EstadoConservacao | None = None
+    status: StatusItem | None = None
+    secretaria_id: int | None = None
+    older_than: datetime | None = None
+
+
 class ItemBase(SQLModel):
     nome: str
     descricao: str
