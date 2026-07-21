@@ -53,9 +53,28 @@ export const ITENS = [
   { id: 15, nome: 'Álcool em gel 70% galão 5L', descricao: 'Validade 2027, excedente', patrimonio: 'PMF-2025-02001', categoria_id: 4, secretaria_id: 2, quantidade: 60, quantidade_reservada: 0, estado_conservacao: 'novo', valor_unitario_estimado: 55.0,   catmat_code: null, criado_em: '2026-06-29T10:30:00Z' },
 ]
 
-// Duas requisições de exemplo: uma já transferida (para o KPI abrir com valor)
-// e uma aprovada (para demonstrar a confirmação de transferência ao vivo).
+// Requisições semente: histórico do programa para os KPIs abrirem com números
+// reais. #1 é uma transferência avulsa; #3 e #4 nascem de intenções (INTENCOES
+// abaixo) — é o que dá coerência ao painel: intenção convertida ⇒ transferência
+// ⇒ economia. #2 fica aprovada para demonstrar a confirmação ao vivo.
+// (Como no protótipo, requisições transferidas não abatem o estoque exibido —
+// os valores em ITENS são o estado "de agora".)
 export const REQUISICOES = [
-  { id: 1, item_id: 3, secretaria_solicitante_id: 5, quantidade: 6, justificativa: 'Sala de atendimento do CRAS Norte', status: 'transferida', intencao_id: null, criado_em: '2026-06-30T14:00:00Z', atualizado_em: '2026-07-01T11:00:00Z' },
-  { id: 2, item_id: 2, secretaria_solicitante_id: 1, quantidade: 4, justificativa: 'Laboratório de informática — monitores queimados', status: 'aprovada', intencao_id: null, criado_em: '2026-07-01T15:00:00Z', atualizado_em: '2026-07-02T10:00:00Z' },
+  { id: 1, item_id: 3,  secretaria_solicitante_id: 5, quantidade: 6,  justificativa: 'Sala de atendimento do CRAS Norte', status: 'transferida', intencao_id: null, criado_em: '2026-06-30T14:00:00Z', atualizado_em: '2026-07-01T11:00:00Z' },
+  { id: 2, item_id: 2,  secretaria_solicitante_id: 1, quantidade: 4,  justificativa: 'Laboratório de informática — monitores queimados', status: 'aprovada', intencao_id: null, criado_em: '2026-07-01T15:00:00Z', atualizado_em: '2026-07-02T10:00:00Z' },
+  { id: 3, item_id: 8,  secretaria_solicitante_id: 3, quantidade: 20, justificativa: 'Atende intenção de compra #1 — Cadeiras de escritório para a recepção', status: 'transferida', intencao_id: 1, criado_em: '2026-07-05T11:00:00Z', atualizado_em: '2026-07-05T16:00:00Z' },
+  { id: 4, item_id: 11, secretaria_solicitante_id: 5, quantidade: 10, justificativa: 'Atende intenção de compra #2 — Ventiladores para o galpão de triagem', status: 'transferida', intencao_id: 2, criado_em: '2026-07-06T14:30:00Z', atualizado_em: '2026-07-07T09:00:00Z' },
+]
+
+// Intenções de compra semente (§3.5): sem elas o painel público abre zerado
+// (0 intenções, 0% de interceptação), o que enfraquece a história de transparência.
+// Duas convertidas — ligadas às requisições #3 e #4 acima, então a economia do KPI
+// bate com as conversões — e uma mantida (a secretaria decidiu comprar mesmo assim,
+// alimentando o indicador de oportunidade). Taxa de interceptação inicial: 2/3 = 67%.
+// Ficam em secretarias diferentes da Ana (SMS, id 2) para não poluir a lista dela;
+// o painel agrega todas (§7).
+export const INTENCOES = [
+  { id: 1, secretaria_id: 3, descricao: 'Cadeiras de escritório para a recepção', categoria_id: 1, quantidade: 20, valor_unitario_estimado: 300.0, catmat_code: null, status: 'convertida', quantidade_atendida: 20, motivo_compra: null, criado_em: '2026-07-05T10:00:00Z' },
+  { id: 2, secretaria_id: 5, descricao: 'Ventiladores para o galpão de triagem', categoria_id: 5, quantidade: 10, valor_unitario_estimado: 240.0, catmat_code: null, status: 'convertida', quantidade_atendida: 10, motivo_compra: null, criado_em: '2026-07-06T14:00:00Z' },
+  { id: 3, secretaria_id: 6, descricao: 'Toner para as impressoras do setor', categoria_id: 3, quantidade: 30, valor_unitario_estimado: 320.0, catmat_code: null, status: 'mantida_compra', quantidade_atendida: 0, motivo_compra: 'Modelo incompatível com as impressoras em uso', criado_em: '2026-07-08T09:00:00Z' },
 ]

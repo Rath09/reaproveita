@@ -8,7 +8,7 @@
 // A máquina de estados do mock espelha o §5 do contrato de propósito:
 // serve de referência visual para o back implementar o mesmo comportamento.
 
-import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS } from './mock.js'
+import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS, INTENCOES } from './mock.js'
 import { http, dados, USAR_API, MOCK_TOTAL } from './http.js'
 import { salvarSessao, limparSessao } from './sessao.js'
 
@@ -19,8 +19,8 @@ const real = (fn) => !MOCK_TOTAL && (USAR_API || FUNCOES_REAIS.has(fn))
 let itens = ITENS.map((i) => ({ ...i }))
 let requisicoes = REQUISICOES.map((r) => ({ ...r }))
 let proximoIdReq = requisicoes.length + 1
-let intencoes = []
-let proximoIdInt = 1
+let intencoes = INTENCOES.map((i) => ({ ...i }))
+let proximoIdInt = intencoes.length + 1
 
 const espera = (ms = 250) => new Promise((res) => setTimeout(res, ms)) // simula rede
 
@@ -127,7 +127,14 @@ export async function getRequisicoes({ secretaria_solicitante_id = null, status 
     ? requisicoes.filter((r) => r.secretaria_solicitante_id === secretaria_solicitante_id)
     : requisicoes
   return lista
-    .map((r) => ({ ...r, item: derivar(itens.find((i) => i.id === r.item_id)) }))
+    .map((r) => {
+      const item = derivar(itens.find((i) => i.id === r.item_id))
+      // "compra evitada" por requisição usa o valor da intenção vinculada (o gasto
+      // que deixaria de acontecer), senão o do item — MESMA regra do KPI (§7) e do
+      // §4, para o card e o indicador nunca divergirem.
+      const intv = r.intencao_id ? intencoes.find((i) => i.id === r.intencao_id)?.valor_unitario_estimado : null
+      return { ...r, item, valor_unitario_evitado: intv ?? item.valor_unitario_estimado }
+    })
     .sort((a, b) => b.id - a.id)
 }
 

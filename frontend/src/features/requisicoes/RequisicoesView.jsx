@@ -12,7 +12,7 @@ function LinhaRequisicao({ req, secretarias, acoes }) {
           <Badge tone={req.status}>{rotuloStatusReq[req.status]}</Badge>
         </div>
         <div style={{ fontSize: 13, color: theme.color.inkSoft, marginTop: 4 }}>
-          {req.quantidade} un · solicitado por <strong>{solicitante?.sigla}</strong> · {brl(req.quantidade * req.item.valor_unitario_estimado)} em compra evitada
+          {req.quantidade} un · solicitado por <strong>{solicitante?.sigla}</strong> · {brl(req.quantidade * (req.valor_unitario_evitado ?? req.item.valor_unitario_estimado))} em compra evitada
         </div>
         <div style={{ fontSize: 13, color: theme.color.inkSoft, marginTop: 2, fontStyle: 'italic' }}>
           “{req.justificativa}”
