@@ -46,7 +46,7 @@ def listar_itens(
     older_than: int | None = Query(default=None),
     session: Session = Depends(get_session),
 ):
-    threshold = datetime.now() - timedelta(days=0 if older_than is None else older_than)
+    threshold = None if older_than is None else datetime.now() - timedelta(days=older_than)
     filtros = FiltrosItem(
         q=q,
         categoria_id=categoria_id,
