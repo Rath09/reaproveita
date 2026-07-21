@@ -124,7 +124,7 @@ Endpoints:
   ```
 - `GET /api/intencoes/{id}/matches` — re-executa o matching (o estoque muda entre consultas).
 - `POST /api/intencoes/{id}/converter` — `{ "item_id": 42, "quantidade": 40 }` → cria a requisição vinculada (`intencao_id`), soma em `quantidade_atendida`, devolve `201` com a requisição criada. Mesmas validações de `POST /api/requisicoes`.
-- `PATCH /api/intencoes/{id}` — `{ "status": "mantida_compra", "motivo_compra": "..." }` quando nenhum match serve. Alimenta o KPI de oportunidade perdida.
+- `PATCH /api/intencoes/{id}` — `{ "status": "mantida_compra", "motivo_compra": "..." }`. Disponível **mesmo havendo matches** (a secretaria pode justificar por que a compra segue necessária apesar da oferta) — a trilha alimenta o KPI de oportunidade perdida e serve de auditoria.
 - `GET /api/intencoes` — filtros `status`, `secretaria_id` + paginação.
 
 ## 4. Regras do matching
@@ -133,9 +133,14 @@ Entrada: uma intenção. Saída: até **10** candidatos ordenados por `score` de
 
 1. **Filtro eliminatório:** `item.categoria_id == intencao.categoria_id` E `item.saldo_livre > 0` E `item.secretaria_id != intencao.secretaria_id`.
 2. **Score:** `score = 0.7 * sim_texto + 0.3 * cobertura`
-   - `sim_texto` (0–1): similaridade entre `intencao.descricao` e `item.nome + " " + item.descricao`, ambos em minúsculas e sem acentos. Implementação de referência: `difflib.SequenceMatcher(None, a, b).ratio()` (stdlib, suficiente para o PoC; `rapidfuzz.fuzz.token_set_ratio/100` como upgrade opcional).
+   - `sim_texto` (0–1): similaridade entre `intencao.descricao` e `item.nome + " " + item.descricao`, ambos em minúsculas e sem acentos.
+   - Base: `difflib.SequenceMatcher(None, a, b).ratio()` (stdlib) — ou Sørensen-Dice de bigramas no front. **Ambas sozinhas casam palavras curtas por acaso** (ex.: "cadeira" ~ "madeira"/"estante" na mesma categoria passavam o corte — bug reportado em validação). Por isso o `sim_texto` incorpora **bônus de token exato**:
+     - `toks` = palavras de `intencao.descricao` com ≥4 chars (normalizadas).
+     - `token_cob` = fração de `toks` presente inteira em `item.nome + " " + item.descricao`.
+     - `sim_texto = max(base, 0.35*base + 0.65*token_cob)`.
+     - Sem `toks` (busca só com palavras curtas), usar `base`. (`rapidfuzz.fuzz.token_set_ratio/100` é upgrade opcional que dispensa o bônus.)
    - `cobertura = min(1, item.saldo_livre / intencao.quantidade)`.
-3. **Corte:** descartar `score < 0.35`.
+3. **Corte:** descartar `score < 0.35`. (Com o bônus, ruído de mesma categoria cai para ~0.25; match real fica ≥0.6. Validado contra o caso "cadeira x estante".)
 4. **Desempate:** maior `cobertura`; depois `criado_em` mais antigo (gira estoque parado há mais tempo).
 
 Formato de cada match:

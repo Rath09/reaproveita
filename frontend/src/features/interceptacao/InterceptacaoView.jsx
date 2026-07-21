@@ -91,8 +91,16 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
       <div style={{ fontSize: 13, color: theme.color.inkSoft }}>
         {dona?.sigla} · atende {atende} de {intencaoAtual.quantidade} un · saldo livre {match.item.saldo_livre}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: theme.color.primary, fontVariantNumeric: 'tabular-nums' }}>
-        {brl(match.economia_estimada)}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: theme.color.inkSoft }}>
+          Economia estimada
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: theme.color.primary, fontVariantNumeric: 'tabular-nums' }}>
+          {brl(match.economia_estimada)}
+        </div>
+        <div style={{ fontSize: 12, color: theme.color.inkSoft, fontVariantNumeric: 'tabular-nums' }}>
+          {brl(match.item.valor_unitario_estimado)}/un em estoque · {atende} un aproveitável(is)
+        </div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <input
@@ -242,28 +250,34 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
             </div>
           )}
 
+          {(() => {
+            // Bloco de "manter compra": registra motivo quando a secretaria segue com a aquisição.
+            // CONTRATO_API.md §3.5 exige a trilha de auditoria TAMBÉM quando há item disponível — por isso
+            // aparece nos dois ramos (com e sem matches), não só quando a lista vem vazia.
+            if (intencaoAtual.status === 'mantida_compra') return null
+            const rotuloBotao = matches.length === 0
+              ? 'Registrar compra mesmo assim'
+              : 'Comprar mesmo assim (justificar)'
+            return mostrarMotivo ? (
+              <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <label style={rotulo}>
+                  Motivo da compra
+                  <textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)}
+                    placeholder="Por que a compra segue necessária mesmo havendo item no catálogo" style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }} />
+                </label>
+                <button style={btn('primario')} disabled={enviandoMotivo || !motivo.trim()} onClick={registrarMotivo}>
+                  {enviandoMotivo ? 'Registrando…' : 'Confirmar'}
+                </button>
+              </div>
+            ) : (
+              <button style={{ ...btn('quieto'), alignSelf: 'flex-start' }} onClick={() => setMostrarMotivo(true)}>
+                {rotuloBotao}
+              </button>
+            )
+          })()}
+
           {matches.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {vazio('Nenhum item compatível no momento.')}
-              {intencaoAtual.status !== 'mantida_compra' && (
-                mostrarMotivo ? (
-                  <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <label style={rotulo}>
-                      Motivo da compra
-                      <textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)}
-                        placeholder="Por que a compra segue necessária" style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }} />
-                    </label>
-                    <button style={btn('primario')} disabled={enviandoMotivo || !motivo.trim()} onClick={registrarMotivo}>
-                      {enviandoMotivo ? 'Registrando…' : 'Confirmar'}
-                    </button>
-                  </div>
-                ) : (
-                  <button style={{ ...btn('quieto'), alignSelf: 'flex-start' }} onClick={() => setMostrarMotivo(true)}>
-                    Registrar compra mesmo assim
-                  </button>
-                )
-              )}
-            </div>
+            vazio('Nenhum item compatível no momento.')
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
               {matches.map((m) => (

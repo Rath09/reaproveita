@@ -136,6 +136,9 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <a href="#/publico" target="_blank" rel="noopener" style={{ fontSize: 13, color: theme.color.primaryDark, fontWeight: 600, textDecoration: 'none' }}>
+              Painel de transparência ↗
+            </a>
             <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
               {usuario.nome} · {papel === 'gestor' ? 'Gestor do almoxarifado' : secretariaDoUsuario?.nome || 'Secretaria'}
             </span>

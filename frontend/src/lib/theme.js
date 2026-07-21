@@ -59,7 +59,7 @@ export function btn(variant = 'primario') {
 
 export const input = {
   fontFamily: theme.font, fontSize: 14, color: theme.color.ink,
-  padding: '9px 12px', borderRadius: theme.radius.control,
+  padding: '9px 12px', borderRadius: theme.radius.control, boxSizing: 'border-box',
   border: `1px solid ${theme.color.line}`, background: '#fff', outlineColor: theme.color.primary,
 }
 

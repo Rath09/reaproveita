@@ -216,7 +216,15 @@ function simTexto(a, b) {
   let ta = 0, tb = 0
   for (const c of ga.values()) ta += c
   for (const c of gb.values()) tb += c
-  return (2 * inter) / (ta + tb)
+  const dice = (2 * inter) / (ta + tb)
+  // Bônus de token exato: bigrama de caractere sozinho casa "cadeira" com "madeira"/"estante".
+  // Palavras inteiras (>=4 chars) da busca presentes no item são sinal forte; sem isso, ruído de
+  // mesma categoria passava o corte (estante aparecia para "cadeira"). Ver CONTRATO_API.md §4.
+  const toks = normalizar(a).split(/\s+/).filter((t) => t.length >= 4)
+  if (!toks.length) return dice
+  const alvo = ` ${normalizar(b)} `
+  const tokenCob = toks.filter((t) => alvo.includes(t)).length / toks.length
+  return Math.max(dice, 0.35 * dice + 0.65 * tokenCob)
 }
 
 function calcularMatches(intencao) {
