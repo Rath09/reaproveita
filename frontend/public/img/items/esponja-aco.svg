@@ -1,0 +1,42 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fardo de esponja de aço com 14 pacotes">
+  <rect width="400" height="300" fill="#EDF1F4"/>
+  <ellipse cx="200" cy="258" rx="118" ry="12" fill="#D5DDE4"/>
+  <rect x="76" y="62" width="248" height="182" rx="12" fill="#DFE6EC" stroke="#BFCAD4" stroke-width="2"/>
+  <rect x="76" y="62" width="248" height="34" rx="12" fill="#1E8FC5" opacity="0.9"/>
+  <text x="200" y="86" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF">FARDO C/ 14 PCT</text>
+  <g>
+    <g transform="translate(108,116)">
+      <rect width="80" height="52" rx="8" fill="#F4F6F8" stroke="#C6D0D9" stroke-width="2"/>
+      <g stroke="#9AA7B4" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M12 40 q10 -26 28 -20 q18 6 8 22"/>
+        <path d="M22 42 q12 -30 34 -18"/>
+        <path d="M40 44 q8 -22 26 -14"/>
+      </g>
+    </g>
+    <g transform="translate(212,116)">
+      <rect width="80" height="52" rx="8" fill="#F4F6F8" stroke="#C6D0D9" stroke-width="2"/>
+      <g stroke="#9AA7B4" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M12 40 q10 -26 28 -20 q18 6 8 22"/>
+        <path d="M22 42 q12 -30 34 -18"/>
+        <path d="M40 44 q8 -22 26 -14"/>
+      </g>
+    </g>
+    <g transform="translate(108,180)">
+      <rect width="80" height="52" rx="8" fill="#F4F6F8" stroke="#C6D0D9" stroke-width="2"/>
+      <g stroke="#9AA7B4" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M12 40 q10 -26 28 -20 q18 6 8 22"/>
+        <path d="M22 42 q12 -30 34 -18"/>
+        <path d="M40 44 q8 -22 26 -14"/>
+      </g>
+    </g>
+    <g transform="translate(212,180)">
+      <rect width="80" height="52" rx="8" fill="#F4F6F8" stroke="#C6D0D9" stroke-width="2"/>
+      <g stroke="#9AA7B4" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M12 40 q10 -26 28 -20 q18 6 8 22"/>
+        <path d="M22 42 q12 -30 34 -18"/>
+        <path d="M40 44 q8 -22 26 -14"/>
+      </g>
+    </g>
+  </g>
+  <path d="M200 62 v182" stroke="#C6D0D9" stroke-width="2" opacity="0.6"/>
+</svg>

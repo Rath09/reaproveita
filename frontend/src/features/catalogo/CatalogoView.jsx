@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { theme, card, btn, input, brl, rotuloEstado, rotuloStatusItem } from '../../lib/theme.js'
 import Badge from '../../components/Badge.jsx'
+import ItemImagem from '../../components/ItemImagem.jsx'
+
+// A partir de 6 meses parado o item vira oportunidade de remanejamento — é o selo
+// que o almoxarife procura no catálogo.
+export const MESES_PARA_OCIOSO = 6
+export const estaOcioso = (item) => (item.paradoDesdeMeses ?? 0) >= MESES_PARA_OCIOSO
 
 function Filtros({ filtro, setFiltro, categorias }) {
   return (
@@ -29,24 +35,30 @@ function ItemCard({ item, siglaSecretaria, nomeCategoria, onAbrir }) {
   return (
     <button
       onClick={onAbrir}
-      style={{ ...card, padding: 16, textAlign: 'left', cursor: 'pointer', fontFamily: theme.font, display: 'flex', flexDirection: 'column', gap: 8 }}
+      style={{ ...card, padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: theme.font, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <strong style={{ fontSize: 15, color: theme.color.ink }}>{item.nome}</strong>
-        <Badge tone={item.status}>{rotuloStatusItem[item.status]}</Badge>
+      <ItemImagem item={item} />
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <strong style={{ fontSize: 15, color: theme.color.ink }}>{item.nome}</strong>
+          <Badge tone={item.status}>{rotuloStatusItem[item.status]}</Badge>
+        </div>
+        <div style={{ fontSize: 13, color: theme.color.inkSoft }}>
+          {nomeCategoria} · {siglaSecretaria}{item.patrimonio ? ` · ${item.patrimonio}` : ''}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
+            Saldo livre: <strong style={{ color: theme.color.ink }}>{item.saldo_livre}</strong> / {item.quantidade}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: theme.color.primaryDark, fontVariantNumeric: 'tabular-nums' }}>
+            {brl(item.valor_unitario_estimado)}/{item.unidade}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <Badge tone="neutro">{rotuloEstado[item.estado_conservacao]}</Badge>
+          {estaOcioso(item) && <Badge tone="ocioso">Ocioso há {item.paradoDesdeMeses} meses</Badge>}
+        </div>
       </div>
-      <div style={{ fontSize: 13, color: theme.color.inkSoft }}>
-        {nomeCategoria} · {siglaSecretaria} · {item.patrimonio}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
-          Saldo livre: <strong style={{ color: theme.color.ink }}>{item.saldo_livre}</strong> / {item.quantidade}
-        </span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: theme.color.primaryDark, fontVariantNumeric: 'tabular-nums' }}>
-          {brl(item.valor_unitario_estimado)}/un
-        </span>
-      </div>
-      <div><Badge tone="neutro">{rotuloEstado[item.estado_conservacao]}</Badge></div>
     </button>
   )
 }
@@ -123,14 +135,24 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
           <button onClick={onFechar} aria-label="Fechar" title="Fechar" style={{ ...btn('quieto'), padding: '4px 12px', fontSize: 16, lineHeight: 1.2 }}>✕</button>
         </div>
 
-        <p style={{ color: theme.color.inkSoft, fontSize: 14 }}>{item.descricao}</p>
+        <div style={{ margin: '14px 0 12px' }}>
+          <ItemImagem item={item} radius={theme.radius.card} />
+        </div>
+
+        {estaOcioso(item) && (
+          <div style={{ marginBottom: 10 }}>
+            <Badge tone="ocioso">Ocioso há {item.paradoDesdeMeses} meses</Badge>
+          </div>
+        )}
+
+        <p style={{ color: theme.color.inkSoft, fontSize: 14, margin: 0 }}>{item.descricao}</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 14, margin: '14px 0' }}>
-          <div>Patrimônio<br /><strong>{item.patrimonio}</strong></div>
+          <div>Patrimônio<br /><strong>{item.patrimonio || 'Material de consumo'}</strong></div>
           <div>Secretaria dona<br /><strong>{dona?.sigla}</strong></div>
           <div>Categoria<br /><strong>{categorias.find((c) => c.id === item.categoria_id)?.nome}</strong></div>
           <div>Conservação<br /><strong>{rotuloEstado[item.estado_conservacao]}</strong></div>
-          <div>Saldo livre<br /><strong>{item.saldo_livre} de {item.quantidade}</strong></div>
-          <div>Valor estimado<br /><strong>{brl(item.valor_unitario_estimado)}/un</strong></div>
+          <div>Saldo livre<br /><strong>{item.saldo_livre} de {item.quantidade} {item.unidade}</strong></div>
+          <div>Valor de referência<br /><strong>{brl(item.valor_unitario_estimado)}/{item.unidade}</strong></div>
         </div>
 
         {podeRequisitar && (

@@ -1,0 +1,20 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rebitador manual">
+  <rect width="400" height="300" fill="#EDF1F4"/>
+  <ellipse cx="200" cy="256" rx="112" ry="12" fill="#D5DDE4"/>
+  <g transform="rotate(-14 200 150)">
+    <rect x="86" y="176" width="196" height="26" rx="13" fill="#C0392B"/>
+    <rect x="86" y="176" width="196" height="11" rx="6" fill="#D9584A"/>
+    <rect x="96" y="120" width="186" height="24" rx="12" fill="#C0392B"/>
+    <rect x="96" y="120" width="186" height="10" rx="5" fill="#D9584A"/>
+    <path d="M266 118 L300 140 L300 186 L266 202 Z" fill="#8C97A3"/>
+    <rect x="292" y="128" width="34" height="52" rx="10" fill="#A9B4BF"/>
+    <rect x="318" y="142" width="26" height="24" rx="6" fill="#7B8794"/>
+    <circle cx="278" cy="160" r="9" fill="#6B7684"/>
+    <rect x="336" y="150" width="18" height="8" rx="4" fill="#5C6874"/>
+  </g>
+  <g fill="#9AA7B4">
+    <circle cx="128" cy="240" r="7"/>
+    <circle cx="152" cy="246" r="5"/>
+    <circle cx="172" cy="240" r="6"/>
+  </g>
+</svg>

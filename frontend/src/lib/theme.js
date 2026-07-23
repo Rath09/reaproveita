@@ -31,6 +31,7 @@ export const theme = {
     aberta:         { bg: '#E3EBF8', fg: '#1D4ED8' },
     convertida:     { bg: '#DFF0E7', fg: '#10513A' },
     mantida_compra: { bg: '#F7ECD8', fg: '#8A5B14' },
+    ocioso:         { bg: '#FDF0D5', fg: '#7A4E10' },
   },
 
   radius: { card: 12, control: 8 },

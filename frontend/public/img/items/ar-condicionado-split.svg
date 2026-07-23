@@ -1,0 +1,18 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ar-condicionado split 12.000 BTU">
+  <rect width="400" height="300" fill="#EDF1F4"/>
+  <rect x="52" y="60" width="296" height="18" rx="4" fill="#DCE3E9"/>
+  <rect x="58" y="86" width="284" height="86" rx="18" fill="#FFFFFF" stroke="#C6D0D9" stroke-width="2"/>
+  <rect x="58" y="86" width="284" height="34" rx="18" fill="#F7F9FB"/>
+  <rect x="76" y="140" width="248" height="20" rx="6" fill="#E4EAEF"/>
+  <g stroke="#C6D0D9" stroke-width="3" stroke-linecap="round">
+    <path d="M88 145 L88 155 M104 145 L104 155 M120 145 L120 155 M136 145 L136 155 M152 145 L152 155 M168 145 L168 155 M184 145 L184 155 M200 145 L200 155 M216 145 L216 155 M232 145 L232 155 M248 145 L248 155 M264 145 L264 155 M280 145 L280 155 M296 145 L296 155 M312 145 L312 155"/>
+  </g>
+  <circle cx="308" cy="106" r="6" fill="#1E8FC5"/>
+  <rect x="76" y="100" width="54" height="10" rx="5" fill="#E4EAEF"/>
+  <g stroke="#1E8FC5" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.75">
+    <path d="M136 194 q28 22 56 0"/>
+    <path d="M172 216 q28 22 56 0"/>
+    <path d="M208 194 q28 22 56 0"/>
+  </g>
+  <text x="200" y="266" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="700" fill="#7C8794">12.000 BTU</text>
+</svg>

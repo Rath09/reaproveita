@@ -1,0 +1,24 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cadeira giratória com braços">
+  <rect width="400" height="300" fill="#EDF1F4"/>
+  <ellipse cx="200" cy="268" rx="112" ry="12" fill="#D5DDE4"/>
+  <rect x="148" y="46" width="104" height="102" rx="18" fill="#39424E"/>
+  <rect x="161" y="59" width="78" height="76" rx="12" fill="#4E5866"/>
+  <rect x="192" y="142" width="16" height="24" fill="#93A0AC"/>
+  <rect x="126" y="156" width="148" height="28" rx="13" fill="#39424E"/>
+  <rect x="140" y="163" width="120" height="10" rx="5" fill="#4E5866"/>
+  <g fill="#93A0AC">
+    <rect x="112" y="130" width="12" height="42" rx="6"/>
+    <rect x="106" y="124" width="40" height="12" rx="6"/>
+    <rect x="276" y="130" width="12" height="42" rx="6"/>
+    <rect x="254" y="124" width="40" height="12" rx="6"/>
+  </g>
+  <rect x="192" y="184" width="16" height="42" fill="#93A0AC"/>
+  <path d="M200 226 L138 250 M200 226 L176 262 M200 226 L224 262 M200 226 L262 250"
+        stroke="#6B7684" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <g fill="#39424E">
+    <circle cx="134" cy="253" r="9"/>
+    <circle cx="174" cy="266" r="9"/>
+    <circle cx="226" cy="266" r="9"/>
+    <circle cx="266" cy="253" r="9"/>
+  </g>
+</svg>

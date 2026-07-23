@@ -1,0 +1,16 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vanga quadrada, pá de corte com cabo de madeira">
+  <rect width="400" height="300" fill="#EDF1F4"/>
+  <ellipse cx="200" cy="272" rx="86" ry="10" fill="#D5DDE4"/>
+  <rect x="188" y="30" width="24" height="26" rx="10" fill="#B4813F"/>
+  <path d="M190 52 h20 v112 h-20 z" fill="#C08B4F"/>
+  <path d="M204 52 h6 v112 h-6 z" fill="#A9743A"/>
+  <path d="M186 160 h28 l-4 22 h-20 z" fill="#8C97A3"/>
+  <path d="M182 180 h36 v18 h-36 z" fill="#7B8794"/>
+  <path d="M156 196 h88 v52 a10 10 0 0 1 -10 10 h-68 a10 10 0 0 1 -10 -10 z" fill="#A9B4BF"/>
+  <path d="M156 196 h44 v62 h-34 a10 10 0 0 1 -10 -10 z" fill="#B8C2CC"/>
+  <path d="M158 250 h84" stroke="#8C97A3" stroke-width="3" fill="none"/>
+  <path d="M156 244 h88 v6 a10 10 0 0 1 -10 8 h-68 a10 10 0 0 1 -10 -8 z" fill="#8C97A3"/>
+  <g stroke="#93A0AC" stroke-width="2" opacity="0.7">
+    <path d="M178 200 v52 M200 200 v52 M222 200 v52"/>
+  </g>
+</svg>
