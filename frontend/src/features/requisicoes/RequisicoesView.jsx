@@ -1,9 +1,67 @@
 import { useState } from 'react'
-import { theme, card, btn, brl, rotuloStatusReq } from '../../lib/theme.js'
+import { theme, card, btn, input, brl, rotuloStatusReq } from '../../lib/theme.js'
 import Badge from '../../components/Badge.jsx'
 import TimelineRequisicao from '../../components/TimelineRequisicao.jsx'
 
-function LinhaRequisicao({ req, secretarias, acoes }) {
+const rotulo = { fontSize: 13, color: theme.color.inkSoft, display: 'flex', flexDirection: 'column', gap: 4 }
+
+// Agendamento de retirada (Bloco 8): o solicitante marca quando, quem e com qual
+// veículo busca o material. Local pré-preenchido com o endereço da secretaria dona.
+function FormAgendamento({ req, secretarias, ocupada, onAgendar, onCancelar }) {
+  const enderecoOrigem = secretarias.find((s) => s.id === req.item.secretaria_id)?.endereco || ''
+  const [dataHoraRetirada, setDataHoraRetirada] = useState('')
+  const [local, setLocal] = useState(enderecoOrigem)
+  const [veiculo, setVeiculo] = useState('')
+  const [nomePessoa, setNomePessoa] = useState('')
+  const [matricula, setMatricula] = useState('')
+
+  const completo = dataHoraRetirada && local.trim() && veiculo.trim() && nomePessoa.trim() && matricula.trim()
+
+  function salvar() {
+    onAgendar(req.id, {
+      data_hora: new Date(dataHoraRetirada).toISOString(),
+      local: local.trim(),
+      veiculo: veiculo.trim(),
+      pessoa: { nome: nomePessoa.trim(), matricula: matricula.trim() },
+    })
+  }
+
+  return (
+    <div style={{ borderTop: `1px solid ${theme.color.line}`, marginTop: 14, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <strong style={{ fontSize: 14, color: theme.color.azulPmf }}>Agendar retirada</strong>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+        <label style={rotulo}>
+          Data e hora
+          <input type="datetime-local" value={dataHoraRetirada} onChange={(e) => setDataHoraRetirada(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }} />
+        </label>
+        <label style={rotulo}>
+          Local de retirada
+          <input value={local} onChange={(e) => setLocal(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }} />
+        </label>
+        <label style={rotulo}>
+          Veículo
+          <input value={veiculo} onChange={(e) => setVeiculo(e.target.value)} placeholder="Ex.: Fiorino da frota — MLA-2E47" style={{ ...input, width: '100%', marginTop: 4 }} />
+        </label>
+        <label style={rotulo}>
+          Pessoa autorizada
+          <input value={nomePessoa} onChange={(e) => setNomePessoa(e.target.value)} placeholder="Nome completo" style={{ ...input, width: '100%', marginTop: 4 }} />
+        </label>
+        <label style={rotulo}>
+          Matrícula
+          <input value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="Ex.: 12.345-6" style={{ ...input, width: '100%', marginTop: 4 }} />
+        </label>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button style={btn('primario')} disabled={!completo || ocupada} onClick={salvar}>
+          {ocupada ? 'Salvando…' : 'Salvar agendamento'}
+        </button>
+        <button style={btn('quieto')} onClick={onCancelar}>Cancelar</button>
+      </div>
+    </div>
+  )
+}
+
+function LinhaRequisicao({ req, secretarias, acoes, formExtra = null }) {
   const [trilhaAberta, setTrilhaAberta] = useState(false)
   const solicitante = secretarias.find((s) => s.id === req.secretaria_solicitante_id)
 
@@ -30,6 +88,8 @@ function LinhaRequisicao({ req, secretarias, acoes }) {
         </div>
       </div>
 
+      {formExtra}
+
       {trilhaAberta && (
         <div style={{ borderTop: `1px solid ${theme.color.line}`, marginTop: 14, paddingTop: 14 }}>
           <TimelineRequisicao requisicao={req} />
@@ -46,16 +106,22 @@ const vazio = (texto) => (
 export default function RequisicoesView({ requisicoes, secretarias, usuario, onAcao }) {
   const [ocupada, setOcupada] = useState(null) // id da requisição em processamento
   const [erroMsg, setErroMsg] = useState(null)
+  const [agendandoId, setAgendandoId] = useState(null) // requisição com o form de retirada aberto
 
-  async function agir(id, acao) {
+  async function agir(id, acao, detalhes = null) {
     setOcupada(id); setErroMsg(null)
     try {
-      await onAcao(id, acao)
+      await onAcao(id, acao, detalhes)
     } catch (e) {
       setErroMsg(e.message)
     } finally {
       setOcupada(null)
     }
+  }
+
+  async function agendarRetirada(id, detalhes) {
+    await agir(id, 'agendar_retirada', detalhes)
+    setAgendandoId(null)
   }
 
   const erroBox = erroMsg && (
@@ -73,13 +139,26 @@ export default function RequisicoesView({ requisicoes, secretarias, usuario, onA
         {requisicoes.length === 0
           ? vazio('Você ainda não requisitou nada. Encontre itens ociosos no Catálogo e evite uma compra nova.')
           : requisicoes.map((r) => (
-              <LinhaRequisicao key={r.id} req={r} secretarias={secretarias} acoes={
-                r.status === 'saida_confirmada' ? (
-                  <button style={btn('primario')} disabled={ocupada === r.id} onClick={() => agir(r.id, 'confirmar_recebimento')}>
-                    Confirmar recebimento
-                  </button>
-                ) : null
-              } />
+              <LinhaRequisicao
+                key={r.id} req={r} secretarias={secretarias}
+                acoes={
+                  r.status === 'saida_confirmada' ? (
+                    <button style={btn('primario')} disabled={ocupada === r.id} onClick={() => agir(r.id, 'confirmar_recebimento')}>
+                      Confirmar recebimento
+                    </button>
+                  ) : r.status === 'aprovada' && !r.agendamento && agendandoId !== r.id ? (
+                    <button style={btn('quieto')} onClick={() => setAgendandoId(r.id)}>Agendar retirada</button>
+                  ) : null
+                }
+                formExtra={
+                  agendandoId === r.id && r.status === 'aprovada' ? (
+                    <FormAgendamento
+                      req={r} secretarias={secretarias} ocupada={ocupada === r.id}
+                      onAgendar={agendarRetirada} onCancelar={() => setAgendandoId(null)}
+                    />
+                  ) : null
+                }
+              />
             ))}
       </section>
     )
