@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { theme, card, btn, input, brl, rotuloEstado, rotuloStatusItem } from '../../lib/theme.js'
 import Badge from '../../components/Badge.jsx'
 
@@ -56,16 +56,53 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
   const [justificativa, setJustificativa] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [avisoDescarte, setAvisoDescarte] = useState(false)
+
+  const backdropRef = useRef(null)
+  const comecouNoBackdrop = useRef(false)
 
   const ehPropria = usuario.papel === 'secretaria' && item.secretaria_id === usuario.secretaria_id
   const podeRequisitar = usuario.papel === 'secretaria' && !ehPropria && item.saldo_livre > 0
   const dona = secretarias.find((s) => s.id === item.secretaria_id)
+
+  // "Sujo" = há trabalho do usuário que fechar destruiria. Sem formulário na tela
+  // (gestor, item da própria secretaria) nunca há o que perder.
+  const sujo = podeRequisitar && (justificativa.trim() !== '' || Number(quantidade) !== 1)
+
+  // Fechamento acidental (backdrop/Esc) é bloqueado com formulário sujo: nesse
+  // estado só X e Cancelar fecham, porque são gestos deliberados de descarte.
+  const fecharSeLimpo = useCallback(() => {
+    if (sujo) { setAvisoDescarte(true); return }
+    onFechar()
+  }, [sujo, onFechar])
+
+  useEffect(() => {
+    const aoTeclar = (e) => { if (e.key === 'Escape') fecharSeLimpo() }
+    document.addEventListener('keydown', aoTeclar)
+    return () => document.removeEventListener('keydown', aoTeclar)
+  }, [fecharSeLimpo])
+
+  // O clique só conta como "no backdrop" se o gesto inteiro aconteceu nele.
+  // Sem isso, arrastar uma seleção de dentro de um campo para fora fecha o painel:
+  // o `click` do DOM dispara no ancestral comum de mousedown e mouseup — o backdrop.
+  function aoPressionar(e) {
+    comecouNoBackdrop.current = e.target === backdropRef.current
+  }
+
+  function aoSoltar(e) {
+    const terminouNoBackdrop = e.target === backdropRef.current
+    const gestoInteiroNoBackdrop = comecouNoBackdrop.current && terminouNoBackdrop
+    comecouNoBackdrop.current = false
+    if (gestoInteiroNoBackdrop) fecharSeLimpo()
+  }
 
   async function enviar() {
     setEnviando(true); setMsg(null)
     try {
       await onRequisitar({ item_id: item.id, quantidade: Number(quantidade), justificativa })
       setMsg({ ok: true, texto: 'Requisição enviada. Acompanhe na aba Requisições.' })
+      // Enviado, nada mais a perder: limpar devolve o fechamento por backdrop/Esc.
+      setQuantidade(1); setJustificativa(''); setAvisoDescarte(false)
     } catch (e) {
       setMsg({ ok: false, texto: e.message })
     } finally {
@@ -74,11 +111,16 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(28,35,33,.35)', display: 'flex', justifyContent: 'flex-end', zIndex: 50 }} onClick={onFechar}>
-      <div style={{ width: 'min(420px, 100%)', background: theme.color.surface, height: '100%', padding: 24, overflowY: 'auto', fontFamily: theme.font }} onClick={(e) => e.stopPropagation()}>
+    <div
+      ref={backdropRef}
+      onMouseDown={aoPressionar}
+      onMouseUp={aoSoltar}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,35,33,.35)', display: 'flex', justifyContent: 'flex-end', zIndex: 50 }}
+    >
+      <div style={{ width: 'min(420px, 100%)', background: theme.color.surface, height: '100%', padding: 24, overflowY: 'auto', fontFamily: theme.font }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
           <h2 style={{ margin: 0, fontSize: 20, color: theme.color.ink }}>{item.nome}</h2>
-          <button onClick={onFechar} style={{ ...btn('quieto'), padding: '4px 10px' }}>Fechar</button>
+          <button onClick={onFechar} aria-label="Fechar" title="Fechar" style={{ ...btn('quieto'), padding: '4px 12px', fontSize: 16, lineHeight: 1.2 }}>✕</button>
         </div>
 
         <p style={{ color: theme.color.inkSoft, fontSize: 14 }}>{item.descricao}</p>
@@ -104,9 +146,17 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
               <textarea rows={3} value={justificativa} onChange={(e) => setJustificativa(e.target.value)}
                 placeholder="Para onde vai e por quê" style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }} />
             </label>
-            <button style={btn('primario')} disabled={enviando || !justificativa.trim()} onClick={enviar}>
-              {enviando ? 'Enviando…' : 'Enviar requisição'}
-            </button>
+            {avisoDescarte && (
+              <p style={{ margin: 0, fontSize: 13, color: theme.color.amber, fontWeight: 600 }}>
+                Você tem dados preenchidos. Envie a requisição ou use Cancelar para descartar.
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={{ ...btn('primario'), flex: 1 }} disabled={enviando || !justificativa.trim()} onClick={enviar}>
+                {enviando ? 'Enviando…' : 'Enviar requisição'}
+              </button>
+              <button type="button" style={btn('quieto')} onClick={onFechar}>Cancelar</button>
+            </div>
           </div>
         )}
 
