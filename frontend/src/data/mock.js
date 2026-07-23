@@ -2,13 +2,14 @@
 // IMPORTANTE: nomes de campos seguem o CONTRATO_API.md (fonte da verdade).
 // Quando o back existir, este arquivo deixa de ser usado (a troca acontece em api.js).
 
+// endereco: local de retirada padrão da secretaria (agendamento de retirada)
 export const SECRETARIAS = [
-  { id: 1, nome: 'Secretaria de Educação', sigla: 'SME' },
-  { id: 2, nome: 'Secretaria de Saúde', sigla: 'SMS' },
-  { id: 3, nome: 'Secretaria de Administração', sigla: 'SMA' },
-  { id: 4, nome: 'Secretaria de Obras', sigla: 'SMO' },
-  { id: 5, nome: 'Secretaria de Assistência Social', sigla: 'SMAS' },
-  { id: 6, nome: 'Secretaria de Meio Ambiente', sigla: 'SMMA' },
+  { id: 1, nome: 'Secretaria de Educação', sigla: 'SME', endereco: 'R. Ferreira Lima, 82 — Centro' },
+  { id: 2, nome: 'Secretaria de Saúde', sigla: 'SMS', endereco: 'Av. Prof. Henrique da Silva Fontes, 6100 — Trindade' },
+  { id: 3, nome: 'Secretaria de Administração', sigla: 'SMA', endereco: 'R. Conselheiro Mafra, 656 — Centro' },
+  { id: 4, nome: 'Secretaria de Obras', sigla: 'SMO', endereco: 'R. Quatorze de Julho, 375 — Estreito' },
+  { id: 5, nome: 'Secretaria de Assistência Social', sigla: 'SMAS', endereco: 'Av. Gov. Gustavo Richard, 5000 — Centro' },
+  { id: 6, nome: 'Secretaria de Meio Ambiente', sigla: 'SMMA', endereco: 'R. Felipe Schmidt, 1320 — Centro' },
 ]
 
 export const CATEGORIAS = [
@@ -24,14 +25,24 @@ export const CATEGORIAS = [
 // Usuários de demonstração (a tela de login aceita qualquer senha no mock).
 // E-mails no padrão do exemplo do contrato §2.
 //
-// NOTA CONSCIENTE: Carlos (gestor) segue com secretaria_id: null, ou seja, aprova
-// requisição de qualquer secretaria — diverge do RBAC por secretaria do contrato
-// v1.1 (§2/§3.4: gestor só age sobre itens da própria secretaria). É simplificação
-// deliberada da demo pública (um único gestor de demo, sem back para validar RBAC
-// real); o back real já implementa o RBAC correto.
+// Carlos é gestor da Educação (SME), dona da cadeira giratória e do ar-condicionado:
+// é o RBAC por secretaria do contrato v1.1 (§2/§3.4) — gestor só decide sobre itens
+// da própria secretaria. A fila dele mostra as requisições das outras secretarias,
+// mas sem botão de decisão.
 export const USUARIOS = {
-  secretaria: { id: 1, nome: 'Ana Souza', email: 'ana@pmf.sc.gov.br', papel: 'secretaria', secretaria_id: 2 }, // SMS
-  gestor: { id: 2, nome: 'Carlos Lima', email: 'carlos@pmf.sc.gov.br', papel: 'gestor', secretaria_id: null },
+  secretaria: { id: 1, nome: 'Ana Souza', email: 'ana@pmf.sc.gov.br', papel: 'secretaria', cargo: 'Almoxarife', secretaria_id: 2 }, // SMS
+  gestor: { id: 2, nome: 'Carlos Lima', email: 'carlos@pmf.sc.gov.br', papel: 'gestor', cargo: 'Gestor', secretaria_id: 1 }, // SME
+}
+
+// Elenco por secretaria — dá nome e cargo a quem aparece na trilha de auditoria das
+// transferências históricas, sem precisar de um login para cada pessoa.
+export const ATORES = {
+  1: { gestor: { nome: 'Carlos Lima', cargo: 'Gestor' },        almoxarife: { nome: 'Marina Duarte', cargo: 'Almoxarife' } },
+  2: { gestor: { nome: 'Roberto Nunes', cargo: 'Gestor' },      almoxarife: { nome: 'Ana Souza', cargo: 'Almoxarife' } },
+  3: { gestor: { nome: 'Patrícia Alves', cargo: 'Gestora' },    almoxarife: { nome: 'Douglas Ferreira', cargo: 'Almoxarife' } },
+  4: { gestor: { nome: 'Sérgio Batista', cargo: 'Gestor' },     almoxarife: { nome: 'Helena Prado', cargo: 'Almoxarife' } },
+  5: { gestor: { nome: 'Cristina Rocha', cargo: 'Gestora' },    almoxarife: { nome: 'Paulo Meireles', cargo: 'Almoxarife' } },
+  6: { gestor: { nome: 'Fernanda Lopes', cargo: 'Gestora' },    almoxarife: { nome: 'Tiago Amorim', cargo: 'Almoxarife' } },
 }
 
 // Campos por item (contrato §3.3): quantidade_reservada, saldo_livre e status
@@ -85,7 +96,7 @@ export const ITENS = [
 //
 // (Como no protótipo, requisições transferidas não abatem o estoque exibido — os
 // valores em ITENS são o estado "de agora".)
-export const REQUISICOES = [
+const REQUISICOES_BASE = [
   { id: 1, item_id: 7, secretaria_solicitante_id: 2, quantidade: 1, justificativa: 'Atende intenção de compra #1 — Projetor para as capacitações da vigilância', status: 'transferida', intencao_id: 1, criado_em: '2026-04-27T09:00:00Z', atualizado_em: '2026-04-28T16:05:00Z' },
   { id: 2, item_id: 4, secretaria_solicitante_id: 1, quantidade: 2, justificativa: 'Secretaria escolar do CEI Coqueiros', status: 'transferida', intencao_id: null, criado_em: '2026-04-29T14:20:00Z', atualizado_em: '2026-05-01T08:35:00Z' },
   { id: 3, item_id: 2, secretaria_solicitante_id: 6, quantidade: 4, justificativa: 'Atende intenção de compra #2 — Monitores para o setor de licenciamento', status: 'transferida', intencao_id: 2, criado_em: '2026-05-02T10:40:00Z', atualizado_em: '2026-05-05T15:25:00Z' },
@@ -119,6 +130,88 @@ export const REQUISICOES = [
   { id: 30, item_id: 18, secretaria_solicitante_id: 5, quantidade: 1, justificativa: 'Sala de atendimento do CRAS Saco Grande', status: 'pendente', intencao_id: null, criado_em: '2026-07-20T14:40:00Z', atualizado_em: '2026-07-20T14:40:00Z' },
   { id: 31, item_id: 13, secretaria_solicitante_id: 6, quantidade: 4, justificativa: 'Fiscalização ambiental — ramais do plantão', status: 'pendente', intencao_id: null, criado_em: '2026-07-21T11:05:00Z', atualizado_em: '2026-07-21T11:05:00Z' },
 ]
+
+// ---- trilha de auditoria (eventos[]) das requisições do seed ----
+// Gerada por função, não escrita à mão: quem fez cada etapa sai de ATORES pela
+// secretaria de origem (gestor aprova e confirma a saída) e de destino
+// (almoxarife solicita e confirma o recebimento), com horários interpolados
+// entre criado_em e atualizado_em. Histórico completo = screenshot de slide.
+
+const nomeSecretaria = (id) => SECRETARIAS.find((s) => s.id === id)?.nome
+const atorDe = (secretaria_id, quem) => {
+  const pessoa = ATORES[secretaria_id][quem]
+  return { nome: pessoa.nome, papel: pessoa.cargo, secretaria: nomeSecretaria(secretaria_id) }
+}
+
+// Soma horas e traz o resultado para o expediente (11h–20h UTC ≈ 8h–17h local):
+// trilha de almoxarifado com saída à 01:00 não passa no teste do telão. O ajuste
+// só empurra para a frente (cedo demais → fim da manhã; tarde demais → manhã do
+// dia seguinte), então uma cadeia de somaHoras nunca sai de ordem.
+const somaHoras = (isoStr, horas) => {
+  const d = new Date(new Date(isoStr).getTime() + Math.round(horas) * 3600000)
+  const h = d.getUTCHours()
+  if (h < 11) d.setUTCHours(11 + (h % 5), 30, 0, 0)
+  else if (h > 20) {
+    d.setUTCDate(d.getUTCDate() + 1)
+    d.setUTCHours(11 + (h % 5), 15, 0, 0)
+  }
+  return d.toISOString().replace(/\.\d{3}Z/, 'Z')
+}
+
+const VEICULOS = [
+  'Fiorino da frota — MLA-2E47',
+  'Saveiro da frota — QID-8C31',
+  'Van do almoxarifado central — RKX-1D05',
+  'Caminhão baú da SMA — MJP-7A98',
+]
+
+function trilhaSeed(r) {
+  const origem = ITENS.find((i) => i.id === r.item_id).secretaria_id
+  const destino = r.secretaria_solicitante_id
+
+  // Cadeia monotônica: cada etapa parte da anterior, sempre em expediente.
+  const tSolicitada = somaHoras(r.criado_em, 0)
+  const eventos = [{ tipo: 'solicitada', ator: atorDe(destino, 'almoxarife'), timestamp: tSolicitada }]
+  if (r.status === 'pendente') return { eventos, agendamento: null }
+
+  const duracaoH = Math.max(6, (new Date(r.atualizado_em) - new Date(r.criado_em)) / 3600000)
+  const tDecisao = somaHoras(tSolicitada, Math.max(2, duracaoH / 3))
+  if (r.status === 'recusada') {
+    eventos.push({ tipo: 'recusada', ator: atorDe(origem, 'gestor'), timestamp: tDecisao })
+    return { eventos, agendamento: null }
+  }
+  eventos.push({ tipo: 'aprovada', ator: atorDe(origem, 'gestor'), timestamp: tDecisao })
+  if (r.status === 'aprovada') return { eventos, agendamento: null }
+
+  // Parte das transferências agendou a retirada pelo sistema; as demais combinaram
+  // por fora — a etapa é opcional na trilha.
+  let agendamento = null
+  let tAnterior = tDecisao
+  if (r.id % 3 === 0) {
+    const almoxarife = ATORES[destino].almoxarife
+    const tAgendada = somaHoras(tDecisao, 3)
+    agendamento = {
+      data_hora: somaHoras(tAgendada, 20), // a retirada combinada, ~1 dia útil depois
+      local: SECRETARIAS.find((s) => s.id === origem).endereco,
+      veiculo: VEICULOS[r.id % VEICULOS.length],
+      pessoa: { nome: almoxarife.nome, matricula: `${10 + destino}.${400 + r.id}-${(r.id % 9) + 1}` },
+    }
+    eventos.push({ tipo: 'retirada_agendada', ator: atorDe(destino, 'almoxarife'), timestamp: tAgendada, detalhes: agendamento })
+    tAnterior = agendamento.data_hora // a saída acontece na retirada
+  }
+
+  const tSaida = somaHoras(tAnterior, agendamento ? 1 : Math.max(4, duracaoH / 2))
+  eventos.push({ tipo: 'saida_confirmada', ator: atorDe(origem, 'gestor'), timestamp: tSaida })
+
+  // Recebimento fecha no atualizado_em do registro, a menos que a cadeia já tenha
+  // passado dele — aí empurra algumas horas para não voltar no tempo.
+  const tRegistro = somaHoras(r.atualizado_em, 0)
+  const tRecebimento = tRegistro > tSaida ? tRegistro : somaHoras(tSaida, 4)
+  eventos.push({ tipo: 'recebimento_confirmado', ator: atorDe(destino, 'almoxarife'), timestamp: tRecebimento })
+  return { eventos, agendamento }
+}
+
+export const REQUISICOES = REQUISICOES_BASE.map((r) => ({ ...r, ...trilhaSeed(r) }))
 
 // Intenções de compra (§3.5). 14 convertidas — cada uma ligada a uma transferência
 // acima, então economia e conversão contam a mesma história — e 7 mantidas, em que

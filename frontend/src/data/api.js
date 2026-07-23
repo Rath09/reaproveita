@@ -8,7 +8,7 @@
 // A máquina de estados do mock espelha o §5 do contrato de propósito:
 // serve de referência visual para o back implementar o mesmo comportamento.
 
-import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS, INTENCOES } from './mock.js'
+import { ITENS, REQUISICOES, SECRETARIAS, CATEGORIAS, USUARIOS, INTENCOES, ATORES } from './mock.js'
 import { http, dados, USAR_API, MOCK_TOTAL } from './http.js'
 import { salvarSessao, limparSessao } from './sessao.js'
 
@@ -17,7 +17,7 @@ const real = (fn) => !MOCK_TOTAL && (USAR_API || FUNCOES_REAIS.has(fn))
 
 // Estado em memória (cópia mutável dos seeds)
 let itens = ITENS.map((i) => ({ ...i }))
-let requisicoes = REQUISICOES.map((r) => ({ ...r }))
+let requisicoes = REQUISICOES.map((r) => ({ ...r, eventos: r.eventos.map((e) => ({ ...e })) }))
 let proximoIdReq = requisicoes.length + 1
 let intencoes = INTENCOES.map((i) => ({ ...i }))
 let proximoIdInt = intencoes.length + 1
@@ -44,6 +44,22 @@ const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo }
 // a intenção não pode escolher o tamanho da própria economia. Match, card de
 // requisição e KPI usam esta função — por construção não têm como divergir.
 const economiaDe = (item, quantidade) => (item?.valor_unitario_estimado ?? 0) * quantidade
+
+// ---- trilha de auditoria: todo passo do §5 registra quem/quando ----
+const atorDoUsuario = (usuario) => ({
+  nome: usuario.nome,
+  papel: usuario.cargo || (usuario.papel === 'gestor' ? 'Gestor' : 'Almoxarife'),
+  secretaria: SECRETARIAS.find((s) => s.id === usuario.secretaria_id)?.nome ?? 'Almoxarifado central',
+})
+
+function registrarEvento(req, tipo, usuario, detalhes = null) {
+  req.eventos.push({
+    tipo,
+    ator: atorDoUsuario(usuario),
+    timestamp: new Date().toISOString(),
+    ...(detalhes ? { detalhes } : {}),
+  })
+}
 
 // =============================== AUTH ===============================
 
@@ -146,7 +162,8 @@ export async function getRequisicoes({ secretaria_solicitante_id = null, status 
 // Lógica pura de criação (sem `espera`, sem checar `real`) — reaproveitada por
 // criarRequisicao() e por converterIntencao() (§3.5), que precisa dela 100% mock
 // independente do que FUNCOES_REAIS diga sobre criarRequisicao.
-function criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id = null }) {
+// `solicitante` assina o evento "solicitada" da trilha de auditoria.
+function criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id = null, solicitante }) {
   const item = itens.find((i) => i.id === item_id)
   if (!item) throw erro('NAO_ENCONTRADO', 'Item não encontrado.')
   if (item.secretaria_id === secretaria_solicitante_id)
@@ -158,29 +175,41 @@ function criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_so
   const nova = {
     id: proximoIdReq++, item_id, secretaria_solicitante_id, quantidade,
     justificativa, status: 'pendente', intencao_id, criado_em: agora, atualizado_em: agora,
+    eventos: [], agendamento: null,
   }
+  registrarEvento(nova, 'solicitada', solicitante ?? { ...ATORES[secretaria_solicitante_id].almoxarife, papel: 'secretaria', secretaria_id: secretaria_solicitante_id })
   requisicoes.push(nova)
   return nova
 }
 
-export async function criarRequisicao({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id = null }) {
+export async function criarRequisicao({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id = null, solicitante }) {
   // Contrato §3.4: no back a secretaria solicitante vem do token, não do body
   if (real('criarRequisicao')) return http('/requisicoes', { method: 'POST', body: { item_id, quantidade, justificativa, intencao_id } })
 
   await espera()
-  return criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id })
+  return criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_solicitante_id, intencao_id, solicitante })
 }
 
-export async function atualizarRequisicao(id, acao) {
+// Quem pode o quê (§2/§3.4): gestor da secretaria DONA do item aprova, recusa e
+// confirma a saída; a secretaria SOLICITANTE agenda a retirada e confirma o
+// recebimento. `usuario` ausente (chamada antiga) pula a checagem — só a demo usa.
+function exigir(cond, mensagem) {
+  if (!cond) throw erro('SEM_PERMISSAO', mensagem)
+}
+
+export async function atualizarRequisicao(id, acao, usuario = null, detalhes = null) {
   if (real('atualizarRequisicao')) return http(`/requisicoes/${id}`, { method: 'PATCH', body: { acao } })
 
   await espera()
   const req = requisicoes.find((r) => r.id === id)
   if (!req) throw erro('NAO_ENCONTRADO', 'Requisição não encontrada.')
   const item = itens.find((i) => i.id === req.item_id)
+  const ehGestorDaOrigem = !usuario || (usuario.papel === 'gestor' && usuario.secretaria_id === item.secretaria_id)
+  const ehSolicitante = !usuario || usuario.secretaria_id === req.secretaria_solicitante_id
 
   // Transições do §5 do contrato — pré-condição errada = 409 TRANSICAO_INVALIDA
   if (acao === 'aprovar') {
+    exigir(ehGestorDaOrigem, 'Apenas o gestor da secretaria dona do item pode aprovar.')
     if (req.status !== 'pendente') throw erro('TRANSICAO_INVALIDA', 'Só é possível aprovar requisição pendente.')
     const { saldo_livre } = derivar(item)
     if (req.quantidade > saldo_livre)
@@ -188,16 +217,29 @@ export async function atualizarRequisicao(id, acao) {
     item.quantidade_reservada += req.quantidade
     req.status = 'aprovada'
   } else if (acao === 'recusar') {
+    exigir(ehGestorDaOrigem, 'Apenas o gestor da secretaria dona do item pode recusar.')
     if (req.status !== 'pendente') throw erro('TRANSICAO_INVALIDA', 'Só é possível recusar requisição pendente.')
     req.status = 'recusada'
-  } else if (acao === 'confirmar_transferencia') {
-    if (req.status !== 'aprovada') throw erro('TRANSICAO_INVALIDA', 'Só é possível confirmar requisição aprovada.')
-    item.quantidade -= req.quantidade
+  } else if (acao === 'agendar_retirada') {
+    exigir(ehSolicitante, 'Apenas a secretaria solicitante agenda a retirada.')
+    if (req.status !== 'aprovada') throw erro('TRANSICAO_INVALIDA', 'Só é possível agendar retirada de requisição aprovada.')
+    req.agendamento = detalhes // o status não muda: agendar é um marco, não um estado
+  } else if (acao === 'confirmar_saida') {
+    exigir(ehGestorDaOrigem, 'Apenas o gestor da secretaria dona do item confirma a saída.')
+    if (req.status !== 'aprovada') throw erro('TRANSICAO_INVALIDA', 'Só é possível confirmar a saída de requisição aprovada.')
+    item.quantidade -= req.quantidade // o material deixou o estoque da origem
     item.quantidade_reservada -= req.quantidade
-    req.status = 'transferida'
+    req.status = 'saida_confirmada'
+  } else if (acao === 'confirmar_recebimento') {
+    exigir(ehSolicitante, 'Apenas a secretaria solicitante confirma o recebimento.')
+    if (req.status !== 'saida_confirmada') throw erro('TRANSICAO_INVALIDA', 'Só é possível confirmar o recebimento após a saída.')
+    req.status = 'transferida' // concluída — entra nos KPIs
   } else {
     throw erro('VALIDACAO', `Ação desconhecida: ${acao}`)
   }
+
+  const TIPO_EVENTO = { aprovar: 'aprovada', recusar: 'recusada', agendar_retirada: 'retirada_agendada', confirmar_saida: 'saida_confirmada', confirmar_recebimento: 'recebimento_confirmado' }
+  if (usuario) registrarEvento(req, TIPO_EVENTO[acao], usuario, detalhes)
   req.atualizado_em = new Date().toISOString()
   return { ...req }
 }

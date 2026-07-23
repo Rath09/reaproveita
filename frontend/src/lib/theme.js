@@ -27,6 +27,7 @@ export const theme = {
     pendente:    { bg: '#E3EBF8', fg: '#1D4ED8' },
     aprovada:    { bg: '#DFF0E7', fg: '#10513A' },
     recusada:    { bg: '#F6E3E1', fg: '#8F332A' },
+    saida_confirmada: { bg: '#DEEDF6', fg: '#155E86' },
     transferida: { bg: '#E5E7EB', fg: '#4B5563' },
     aberta:         { bg: '#E3EBF8', fg: '#1D4ED8' },
     convertida:     { bg: '#DFF0E7', fg: '#10513A' },
@@ -67,6 +68,12 @@ export const input = {
 export const brl = (n) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n || 0)
 
+// dd/mm/aaaa hh:mm — formato único de data/hora do app
+export const dataHora = (iso) =>
+  new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).replace(',', '')
+
 export const rotuloEstado = {
   novo: 'Novo', otimo: 'Ótimo', bom: 'Bom', regular: 'Regular', ruim: 'Ruim',
 }
@@ -76,7 +83,8 @@ export const rotuloStatusItem = {
 }
 
 export const rotuloStatusReq = {
-  pendente: 'Pendente', aprovada: 'Aprovada', recusada: 'Recusada', transferida: 'Transferida',
+  pendente: 'Pendente', aprovada: 'Aprovada', recusada: 'Recusada',
+  saida_confirmada: 'Saída confirmada', transferida: 'Concluída',
 }
 
 export const rotuloStatusIntencao = {

@@ -81,12 +81,12 @@ export default function App() {
   if (!usuario) return <LoginView onEntrar={entrar} />
 
   async function requisitar(dados) {
-    await api.criarRequisicao({ ...dados, secretaria_solicitante_id: usuario.secretaria_id })
+    await api.criarRequisicao({ ...dados, secretaria_solicitante_id: usuario.secretaria_id, solicitante: usuario })
     await recarregar()
   }
 
-  async function decidir(id, acao) {
-    await api.atualizarRequisicao(id, acao)
+  async function decidir(id, acao, detalhes = null) {
+    await api.atualizarRequisicao(id, acao, usuario, detalhes) // usuario assina o evento da trilha
     await recarregar()
   }
 
@@ -140,7 +140,7 @@ export default function App() {
               Painel de transparência ↗
             </a>
             <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
-              {usuario.nome} · {papel === 'gestor' ? 'Gestor do almoxarifado' : secretariaDoUsuario?.nome || 'Secretaria'}
+              {usuario.nome} · {usuario.cargo || (papel === 'gestor' ? 'Gestor' : 'Almoxarife')} · {secretariaDoUsuario?.nome || 'Secretaria'}
             </span>
             <button onClick={sair} style={{ ...btn('quieto'), padding: '6px 14px' }}>Sair</button>
           </div>
