@@ -35,6 +35,7 @@ function ItemCard({ item, siglaSecretaria, nomeCategoria, onAbrir }) {
   return (
     <button
       onClick={onAbrir}
+      className="card-elevavel"
       style={{ ...card, padding: 0, textAlign: 'left', cursor: 'pointer', fontFamily: theme.font, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       <ItemImagem item={item} />

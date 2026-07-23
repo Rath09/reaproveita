@@ -1,42 +1,54 @@
-// theme.js — tokens de design do Reaproveita.
-// Identidade: serviço público + reuso. Verde profundo institucional como cor de ação,
-// papel frio de fundo, âmbar para "reservado". A assinatura visual é o contador
-// de compra evitada (número grande tabular, no App/Stat).
+// theme.js — tokens de design do Reaproveita (identidade PMF).
+// Sóbrio e institucional: azul profundo da prefeitura para estrutura, ciano para
+// interação, laranja APENAS no CTA principal, e o verde reservado com
+// exclusividade a valores monetários economizados — nenhum outro uso.
 
 export const theme = {
   font: `'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
 
   color: {
-    primary: '#1B7A53',      // verde-reuso (ações, marca, KPI)
-    primaryDark: '#10513A',
+    azulPmf: '#0D2C54',      // header, títulos, navegação, texto de destaque
+    cianoPmf: '#1E8FC5',     // links, tab ativa, interativos, série principal dos gráficos
+    cianoEscuro: '#12689D',  // hover/contraste AA do ciano sobre branco
+    laranjaPmf: '#F07020',   // SÓ o CTA principal e micro-destaques
+    laranjaEscuro: '#C25712',// hover do CTA / laranja com contraste AA
+    verdeEconomia: '#1B7A53',    // exclusivo: dinheiro economizado
+    verdeEconomiaDark: '#10513A',
+
     ink: '#1C2321',          // texto principal
-    inkSoft: '#5C6662',      // texto secundário
-    paper: '#F5F7F5',        // fundo da página
+    inkSoft: '#5A6268',      // texto secundário (AA sobre branco e sobre paper)
+    paper: '#F4F6F8',        // fundo da página (neutro frio, casa com o azul)
     surface: '#FFFFFF',      // cartões
-    line: '#E1E6E2',         // bordas
+    line: '#DFE4E8',         // bordas
     danger: '#B3453A',
-    amber: '#B7791F',
+    amber: '#8A5B14',
+
+    // aliases legados — apontam para os tokens novos para nenhum componente quebrar;
+    // migrar os usos aos poucos e remover
+    primary: '#1B7A53',
+    primaryDark: '#0D2C54',
   },
 
-  // Tons semânticos usados pelo Badge (status do item, status da requisição, estado de conservação)
+  // Tons semânticos usados pelo Badge (status do item, da requisição, conservação)
   tones: {
-    neutro:      { bg: '#EEF1EE', fg: '#5C6662' },
-    disponivel:  { bg: '#DFF0E7', fg: '#10513A' },
-    reservado:   { bg: '#F7ECD8', fg: '#8A5B14' },
+    neutro:      { bg: '#EDF0F2', fg: '#4A5258' },
+    disponivel:  { bg: '#DFF0E7', fg: '#0F4E37' },
+    reservado:   { bg: '#F7ECD8', fg: '#7A4E10' },
     transferido: { bg: '#E5E7EB', fg: '#4B5563' },
-    pendente:    { bg: '#E3EBF8', fg: '#1D4ED8' },
-    aprovada:    { bg: '#DFF0E7', fg: '#10513A' },
+    pendente:    { bg: '#E1EDF6', fg: '#0F5C8C' },
+    aprovada:    { bg: '#DFF0E7', fg: '#0F4E37' },
     recusada:    { bg: '#F6E3E1', fg: '#8F332A' },
-    saida_confirmada: { bg: '#DEEDF6', fg: '#155E86' },
-    transferida: { bg: '#E5E7EB', fg: '#4B5563' },
-    aberta:         { bg: '#E3EBF8', fg: '#1D4ED8' },
-    convertida:     { bg: '#DFF0E7', fg: '#10513A' },
-    mantida_compra: { bg: '#F7ECD8', fg: '#8A5B14' },
+    saida_confirmada: { bg: '#DEEDF6', fg: '#12689D' },
+    transferida: { bg: '#E5E7EB', fg: '#374151' },
+    aberta:         { bg: '#E1EDF6', fg: '#0F5C8C' },
+    convertida:     { bg: '#DFF0E7', fg: '#0F4E37' },
+    mantida_compra: { bg: '#F7ECD8', fg: '#7A4E10' },
     ocioso:         { bg: '#FDF0D5', fg: '#7A4E10' },
   },
 
   radius: { card: 12, control: 8 },
-  shadow: '0 1px 2px rgba(28,35,33,.06), 0 4px 14px rgba(28,35,33,.05)',
+  shadow: '0 1px 2px rgba(13,44,84,.06), 0 4px 14px rgba(13,44,84,.06)',
+  shadowHover: '0 2px 4px rgba(13,44,84,.08), 0 10px 24px rgba(13,44,84,.10)',
 }
 
 // ---- helpers de estilo (o protótipo usa estilo inline; sem framework CSS) ----
@@ -54,7 +66,8 @@ export function btn(variant = 'primario') {
     padding: '9px 16px', borderRadius: theme.radius.control,
     cursor: 'pointer', border: '1px solid transparent',
   }
-  if (variant === 'primario') return { ...base, background: theme.color.primary, color: '#fff' }
+  if (variant === 'primario') return { ...base, background: theme.color.cianoEscuro, color: '#fff' }
+  if (variant === 'cta') return { ...base, background: theme.color.laranjaPmf, color: '#fff', fontWeight: 700 }
   if (variant === 'perigo') return { ...base, background: '#fff', color: theme.color.danger, borderColor: theme.color.danger }
   return { ...base, background: '#fff', color: theme.color.ink, borderColor: theme.color.line } // 'quieto'
 }
@@ -62,7 +75,7 @@ export function btn(variant = 'primario') {
 export const input = {
   fontFamily: theme.font, fontSize: 14, color: theme.color.ink,
   padding: '9px 12px', borderRadius: theme.radius.control, boxSizing: 'border-box',
-  border: `1px solid ${theme.color.line}`, background: '#fff', outlineColor: theme.color.primary,
+  border: `1px solid ${theme.color.line}`, background: '#fff', outlineColor: theme.color.cianoPmf,
 }
 
 export const brl = (n) =>

@@ -1,5 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { theme, btn, brl } from './lib/theme.js'
+import { theme, card, btn, brl } from './lib/theme.js'
+
+// KPI em card branco com sombra suave (identidade PMF, Bloco 6)
+const cardKpi = { ...card, padding: '14px 18px', flex: '0 1 auto' }
 import * as api from './data/api.js'
 import { getSessao } from './data/sessao.js'
 import Stat from './components/Stat.jsx'
@@ -117,8 +120,8 @@ export default function App() {
       style={{
         fontFamily: theme.font, fontSize: 14, fontWeight: 600, cursor: 'pointer',
         padding: '10px 4px', background: 'none', border: 'none',
-        color: aba === id ? theme.color.primaryDark : theme.color.inkSoft,
-        borderBottom: aba === id ? `3px solid ${theme.color.primary}` : '3px solid transparent',
+        color: aba === id ? theme.color.azulPmf : theme.color.inkSoft,
+        borderBottom: aba === id ? `3px solid ${theme.color.cianoPmf}` : '3px solid transparent',
       }}
     >
       {rotulo}
@@ -127,16 +130,22 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: theme.font, background: theme.color.paper, minHeight: '100vh', color: theme.color.ink }}>
-      {/* Cabeçalho */}
-      <header style={{ background: theme.color.surface, borderBottom: `1px solid ${theme.color.line}` }}>
+      {/* Hover dos cards: única regra CSS global — inline style não expressa :hover */}
+      <style>{`
+        .card-elevavel { transition: transform 160ms ease, box-shadow 160ms ease; }
+        .card-elevavel:hover { transform: translateY(-2px); box-shadow: ${theme.shadowHover}; }
+      `}</style>
+
+      {/* Cabeçalho — filete institucional de 4px no topo */}
+      <header style={{ background: theme.color.surface, borderTop: `4px solid ${theme.color.azulPmf}`, borderBottom: `1px solid ${theme.color.line}` }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', padding: '14px 20px', display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: theme.color.primaryDark, letterSpacing: -0.3 }}>Reaproveita</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: theme.color.azulPmf, letterSpacing: -0.3 }}>Reaproveita</div>
             <div style={{ fontSize: 12, color: theme.color.inkSoft }}>Almoxarifado compartilhado · Prefeitura de Florianópolis</div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <a href="#/publico" target="_blank" rel="noopener" style={{ fontSize: 13, color: theme.color.primaryDark, fontWeight: 600, textDecoration: 'none' }}>
+            <a href="#/publico" target="_blank" rel="noopener" style={{ fontSize: 13, color: theme.color.cianoEscuro, fontWeight: 600, textDecoration: 'none' }}>
               Painel de transparência ↗
             </a>
             <span style={{ fontSize: 13, color: theme.color.inkSoft }}>
@@ -152,15 +161,19 @@ export default function App() {
           faixa competiria com o do resultado. Colapso por max-height para a transição
           ser suave, sem pulo de layout. */}
       <div style={{
-        background: theme.color.surface, borderBottom: `1px solid ${theme.color.line}`,
-        maxHeight: aba === 'interceptacao' ? 0 : 140, opacity: aba === 'interceptacao' ? 0 : 1,
+        maxHeight: aba === 'interceptacao' ? 0 : 180, opacity: aba === 'interceptacao' ? 0 : 1,
         overflow: 'hidden', transition: 'max-height 260ms ease, opacity 200ms ease',
-        borderBottomWidth: aba === 'interceptacao' ? 0 : 1,
       }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '16px 20px', display: 'flex', gap: 36, flexWrap: 'wrap' }}>
-          <Stat big label="Compras evitadas" value={kpis ? brl(kpis.compras_evitadas_valor) : '—'} />
-          <Stat label="Itens transferidos" value={kpis ? kpis.itens_transferidos : '—'} />
-          <Stat label="Requisições concluídas" value={kpis ? kpis.requisicoes_concluidas : '—'} />
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '18px 20px 4px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ ...cardKpi, flex: '1 1 240px' }}>
+            <Stat big label="Compras evitadas" value={kpis ? brl(kpis.compras_evitadas_valor) : '—'} />
+          </div>
+          <div style={cardKpi}>
+            <Stat label="Itens transferidos" value={kpis ? kpis.itens_transferidos : '—'} />
+          </div>
+          <div style={cardKpi}>
+            <Stat label="Requisições concluídas" value={kpis ? kpis.requisicoes_concluidas : '—'} />
+          </div>
         </div>
       </div>
 

@@ -73,7 +73,8 @@ function FormularioIntencao({ categorias, form, setForm, colapsado, onEditar, en
         </label>
       </div>
 
-      <button type="submit" style={btn('primario')} disabled={enviando}>
+      {/* Único uso do laranja PMF: o CTA que dispara a interceptação */}
+      <button type="submit" style={btn('cta')} disabled={enviando}>
         {enviando ? 'Buscando…' : 'Ver o que já existe'}
       </button>
     </form>
@@ -108,7 +109,7 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
   const atende = Math.min(match.item.saldo_livre, intencaoAtual.quantidade)
 
   return (
-    <div style={{ ...card, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="card-elevavel" style={{ ...card, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <ItemImagem item={match.item} alturaFixa={130} />
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'start' }}>
@@ -123,7 +124,7 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: theme.color.inkSoft }}>
           Economia estimada
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: theme.color.primary, fontVariantNumeric: 'tabular-nums' }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: theme.color.verdeEconomia, fontVariantNumeric: 'tabular-nums' }}>
           {brl(match.economia_estimada)}
         </div>
         <div style={{ fontSize: 12, color: theme.color.inkSoft, fontVariantNumeric: 'tabular-nums' }}>
