@@ -38,6 +38,13 @@ function derivar(item) {
 
 const erro = (codigo, mensagem) => Object.assign(new Error(mensagem), { codigo })
 
+// ---- economia auditável: uma única regra para toda a aplicação ----
+// Sempre preço de referência do item no catálogo × quantidade atendida. O valor
+// que o usuário digitava na intenção não entra em cálculo nenhum: quem registra
+// a intenção não pode escolher o tamanho da própria economia. Match, card de
+// requisição e KPI usam esta função — por construção não têm como divergir.
+const economiaDe = (item, quantidade) => (item?.valor_unitario_estimado ?? 0) * quantidade
+
 // =============================== AUTH ===============================
 
 // Retorno do contrato §2: { access_token, token_type, expires_in, usuario }.
@@ -129,11 +136,9 @@ export async function getRequisicoes({ secretaria_solicitante_id = null, status 
   return lista
     .map((r) => {
       const item = derivar(itens.find((i) => i.id === r.item_id))
-      // "compra evitada" por requisição usa o valor da intenção vinculada (o gasto
-      // que deixaria de acontecer), senão o do item — MESMA regra do KPI (§7) e do
-      // §4, para o card e o indicador nunca divergirem.
-      const intv = r.intencao_id ? intencoes.find((i) => i.id === r.intencao_id)?.valor_unitario_estimado : null
-      return { ...r, item, valor_unitario_evitado: intv ?? item.valor_unitario_estimado }
+      // economia_evitada vem daqui pronta: a view não recalcula, então o card e o
+      // KPI são o mesmo número por construção
+      return { ...r, item, economia_evitada: economiaDe(item, r.quantidade) }
     })
     .sort((a, b) => b.id - a.id)
 }
@@ -239,11 +244,10 @@ function calcularMatches(intencao) {
     .filter((i) => i.categoria_id === intencao.categoria_id && i.saldo_livre > 0 && i.secretaria_id !== intencao.secretaria_id)
     .map((item) => {
       const cobertura = Math.min(1, item.saldo_livre / intencao.quantidade)
-      const valorRef = intencao.valor_unitario_estimado ?? item.valor_unitario_estimado
       return {
         item, cobertura,
         score: 0.7 * simTexto(intencao.descricao, `${item.nome} ${item.descricao}`) + 0.3 * cobertura,
-        economia_estimada: Math.min(item.saldo_livre, intencao.quantidade) * valorRef,
+        economia_estimada: economiaDe(item, Math.min(item.saldo_livre, intencao.quantidade)),
       }
     })
     .filter((m) => m.score >= 0.35)
@@ -251,15 +255,17 @@ function calcularMatches(intencao) {
     .slice(0, 10)
 }
 
-export async function criarIntencao({ descricao, categoria_id, quantidade, valor_unitario_estimado = null, catmat_code = null, secretaria_id }) {
+// Sem valor_unitario_estimado: o formulário não pergunta mais o preço (a economia
+// vem do catálogo, não de quem registra a intenção).
+export async function criarIntencao({ descricao, categoria_id, quantidade, catmat_code = null, secretaria_id }) {
   // Devolve { intencao, matches } — matching síncrono (contrato §3.5)
   if (real('criarIntencao'))
-    return http('/intencoes', { method: 'POST', body: { descricao, categoria_id, quantidade, valor_unitario_estimado, catmat_code } })
+    return http('/intencoes', { method: 'POST', body: { descricao, categoria_id, quantidade, catmat_code } })
 
   await espera()
   const intencao = {
     id: proximoIdInt++, secretaria_id, descricao, categoria_id, quantidade,
-    valor_unitario_estimado, catmat_code, status: 'aberta', quantidade_atendida: 0,
+    catmat_code, status: 'aberta', quantidade_atendida: 0,
     motivo_compra: null, criado_em: new Date().toISOString(),
   }
   intencoes.push(intencao)
@@ -317,14 +323,10 @@ export async function getIntencoes({ secretaria_id = null } = {}) {
 // Payload completo do §7 — usado tanto pelo painel autenticado quanto pelo público
 function calcularKpisMock() {
   const transferidas = requisicoes.filter((r) => r.status === 'transferida')
-  const compras_evitadas_valor = transferidas.reduce((soma, r) => {
-    // valor de referência: o da intenção vinculada (é o gasto que deixaria de
-    // acontecer), senão o do item — mesma regra do §4 (economia_estimada)
-    const intencaoVinculada = r.intencao_id ? intencoes.find((i) => i.id === r.intencao_id) : null
-    const item = itens.find((i) => i.id === r.item_id)
-    const valorRef = intencaoVinculada?.valor_unitario_estimado ?? item?.valor_unitario_estimado ?? 0
-    return soma + r.quantidade * valorRef
-  }, 0)
+  const compras_evitadas_valor = transferidas.reduce(
+    (soma, r) => soma + economiaDe(itens.find((i) => i.id === r.item_id), r.quantidade),
+    0,
+  )
   const intencoes_total = intencoes.length
   const intencoes_convertidas = intencoes.filter((i) => i.status === 'convertida').length
   return {

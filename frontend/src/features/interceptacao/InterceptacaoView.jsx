@@ -12,7 +12,6 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
   const [descricao, setDescricao] = useState('')
   const [categoria_id, setCategoriaId] = useState('')
   const [quantidade, setQuantidade] = useState('')
-  const [valor, setValor] = useState('')
   const [catmat, setCatmat] = useState('')
 
   async function enviar(e) {
@@ -21,7 +20,6 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
       descricao,
       categoria_id: Number(categoria_id),
       quantidade: Number(quantidade),
-      valor_unitario_estimado: valor ? Number(valor) : null,
       catmat_code: catmat.trim() || null,
     })
   }
@@ -44,7 +42,7 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
         />
       </label>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
         <label style={rotulo}>
           Categoria
           <select required value={categoria_id} onChange={(e) => setCategoriaId(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }}>
@@ -55,13 +53,6 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
         <label style={rotulo}>
           Quantidade
           <input type="number" min={1} required value={quantidade} onChange={(e) => setQuantidade(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }} />
-        </label>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <label style={rotulo}>
-          Valor unitário estimado (opcional)
-          <input type="number" min={0} step="0.01" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="R$" style={{ ...input, width: '100%', marginTop: 4 }} />
         </label>
         <label style={rotulo}>
           CATMAT (opcional)
@@ -100,6 +91,9 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
         </div>
         <div style={{ fontSize: 12, color: theme.color.inkSoft, fontVariantNumeric: 'tabular-nums' }}>
           {brl(match.item.valor_unitario_estimado)}/un em estoque · {atende} un aproveitável(is)
+        </div>
+        <div style={{ fontSize: 11, color: theme.color.inkSoft, marginTop: 2 }}>
+          Economia calculada pelo preço de referência do catálogo
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

@@ -73,8 +73,11 @@ export const REQUISICOES = [
 // alimentando o indicador de oportunidade). Taxa de interceptação inicial: 2/3 = 67%.
 // Ficam em secretarias diferentes da Ana (SMS, id 2) para não poluir a lista dela;
 // o painel agrega todas (§7).
+//
+// Sem valor_unitario_estimado: a economia sai do preço de referência do item no
+// catálogo, nunca de um valor informado por quem registra a intenção.
 export const INTENCOES = [
-  { id: 1, secretaria_id: 3, descricao: 'Cadeiras de escritório para a recepção', categoria_id: 1, quantidade: 20, valor_unitario_estimado: 300.0, catmat_code: null, status: 'convertida', quantidade_atendida: 20, motivo_compra: null, criado_em: '2026-07-05T10:00:00Z' },
-  { id: 2, secretaria_id: 5, descricao: 'Ventiladores para o galpão de triagem', categoria_id: 5, quantidade: 10, valor_unitario_estimado: 240.0, catmat_code: null, status: 'convertida', quantidade_atendida: 10, motivo_compra: null, criado_em: '2026-07-06T14:00:00Z' },
-  { id: 3, secretaria_id: 6, descricao: 'Toner para as impressoras do setor', categoria_id: 3, quantidade: 30, valor_unitario_estimado: 320.0, catmat_code: null, status: 'mantida_compra', quantidade_atendida: 0, motivo_compra: 'Modelo incompatível com as impressoras em uso', criado_em: '2026-07-08T09:00:00Z' },
+  { id: 1, secretaria_id: 3, descricao: 'Cadeiras de escritório para a recepção', categoria_id: 1, quantidade: 20, catmat_code: null, status: 'convertida', quantidade_atendida: 20, motivo_compra: null, criado_em: '2026-07-05T10:00:00Z' },
+  { id: 2, secretaria_id: 5, descricao: 'Ventiladores para o galpão de triagem', categoria_id: 5, quantidade: 10, catmat_code: null, status: 'convertida', quantidade_atendida: 10, motivo_compra: null, criado_em: '2026-07-06T14:00:00Z' },
+  { id: 3, secretaria_id: 6, descricao: 'Toner para as impressoras do setor', categoria_id: 3, quantidade: 30, catmat_code: null, status: 'mantida_compra', quantidade_atendida: 0, motivo_compra: 'Modelo incompatível com as impressoras em uso', criado_em: '2026-07-08T09:00:00Z' },
 ]
