@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { theme, card, btn, input, brl, rotuloStatusIntencao } from '../../lib/theme.js'
 import Badge from '../../components/Badge.jsx'
+import ItemImagem from '../../components/ItemImagem.jsx'
 
 const rotulo = { fontSize: 13, color: theme.color.inkSoft, display: 'flex', flexDirection: 'column', gap: 4 }
 
@@ -8,19 +9,31 @@ const vazio = (texto) => (
   <div style={{ ...card, padding: 24, color: theme.color.inkSoft, fontSize: 14 }}>{texto}</div>
 )
 
-function FormularioIntencao({ categorias, enviando, onCriar }) {
-  const [descricao, setDescricao] = useState('')
-  const [categoria_id, setCategoriaId] = useState('')
-  const [quantidade, setQuantidade] = useState('')
-  const [catmat, setCatmat] = useState('')
+// Formulário controlado pelo pai: os valores sobrevivem ao colapso e o "Editar"
+// reabre exatamente o que foi digitado (ou a intenção revisitada).
+function FormularioIntencao({ categorias, form, setForm, colapsado, onEditar, enviando, onCriar }) {
+  const campo = (k) => (e) => setForm({ ...form, [k]: e.target.value })
+
+  if (colapsado) {
+    const nomeCategoria = categorias.find((c) => c.id === Number(form.categoria_id))?.nome
+    return (
+      <div style={{ ...card, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 14, color: theme.color.ink }}>
+          <strong>{form.descricao}</strong>
+          <span style={{ color: theme.color.inkSoft }}> · {form.quantidade} un · {nomeCategoria}</span>
+        </span>
+        <button type="button" style={{ ...btn('quieto'), padding: '6px 14px' }} onClick={onEditar}>Editar</button>
+      </div>
+    )
+  }
 
   async function enviar(e) {
     e.preventDefault()
     await onCriar({
-      descricao,
-      categoria_id: Number(categoria_id),
-      quantidade: Number(quantidade),
-      catmat_code: catmat.trim() || null,
+      descricao: form.descricao,
+      categoria_id: Number(form.categoria_id),
+      quantidade: Number(form.quantidade),
+      catmat_code: form.catmat.trim() || null,
     })
   }
 
@@ -36,7 +49,7 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
       <label style={rotulo}>
         Descrição
         <textarea
-          rows={3} required value={descricao} onChange={(e) => setDescricao(e.target.value)}
+          rows={3} required value={form.descricao} onChange={campo('descricao')}
           placeholder="Ex.: cadeiras giratórias para o setor de atendimento"
           style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }}
         />
@@ -45,18 +58,18 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
         <label style={rotulo}>
           Categoria
-          <select required value={categoria_id} onChange={(e) => setCategoriaId(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }}>
+          <select required value={form.categoria_id} onChange={campo('categoria_id')} style={{ ...input, width: '100%', marginTop: 4 }}>
             <option value="">Selecione</option>
             {categorias.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
           </select>
         </label>
         <label style={rotulo}>
           Quantidade
-          <input type="number" min={1} required value={quantidade} onChange={(e) => setQuantidade(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }} />
+          <input type="number" min={1} required value={form.quantidade} onChange={campo('quantidade')} style={{ ...input, width: '100%', marginTop: 4 }} />
         </label>
         <label style={rotulo}>
           CATMAT (opcional)
-          <input value={catmat} onChange={(e) => setCatmat(e.target.value)} style={{ ...input, width: '100%', marginTop: 4 }} />
+          <input value={form.catmat} onChange={campo('catmat')} style={{ ...input, width: '100%', marginTop: 4 }} />
         </label>
       </div>
 
@@ -67,20 +80,44 @@ function FormularioIntencao({ categorias, enviando, onCriar }) {
   )
 }
 
+// Skeleton da busca: o sistema "varrendo o estoque das secretarias" antes de
+// mostrar os resultados — o ritmo é parte da história, não enfeite.
+function SkeletonBusca() {
+  const barra = (w, h = 12) => ({ width: w, height: h, borderRadius: 6, background: '#E4E9E5', animation: 'pulsar 1.1s ease-in-out infinite' })
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <style>{'@keyframes pulsar { 0%, 100% { opacity: 1 } 50% { opacity: 0.45 } }'}</style>
+      <div style={{ fontSize: 14, color: theme.color.inkSoft }}>Varrendo o estoque das secretarias…</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+        {[0, 1, 2].map((k) => (
+          <div key={k} style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ ...barra('100%', 110), borderRadius: 10 }} />
+            <div style={barra('70%', 14)} />
+            <div style={barra('45%')} />
+            <div style={barra('55%', 22)} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidade, convertendo, onConverter }) {
   const dona = secretarias.find((s) => s.id === match.item.secretaria_id)
   const restante = intencaoAtual.quantidade - intencaoAtual.quantidade_atendida
   const atende = Math.min(match.item.saldo_livre, intencaoAtual.quantidade)
 
   return (
-    <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ ...card, padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <ItemImagem item={match.item} alturaFixa={130} />
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'start' }}>
         <strong style={{ fontSize: 15, color: theme.color.ink }}>{match.item.nome}</strong>
         <Badge tone="disponivel">{Math.round(match.score * 100)}% compatível</Badge>
       </div>
       <div style={{ fontSize: 13, color: theme.color.inkSoft }}>{match.item.descricao}</div>
       <div style={{ fontSize: 13, color: theme.color.inkSoft }}>
-        {dona?.sigla} · atende {atende} de {intencaoAtual.quantidade} un · saldo livre {match.item.saldo_livre}
+        {dona?.sigla} · atende <strong style={{ color: theme.color.ink }}>{atende} de {intencaoAtual.quantidade}</strong> · saldo livre {match.item.saldo_livre} {match.item.unidade}
       </div>
       <div>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: theme.color.inkSoft }}>
@@ -106,6 +143,7 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
           {convertendo ? 'Convertendo…' : 'Converter em requisição'}
         </button>
       </div>
+      </div>
     </div>
   )
 }
@@ -127,7 +165,11 @@ function LinhaIntencao({ intencao, onRever }) {
   )
 }
 
+const FORM_VAZIO = { descricao: '', categoria_id: '', quantidade: '', catmat: '' }
+
 export default function InterceptacaoView({ categorias, secretarias, usuario, onCriarIntencao, onGetMatches, onConverter, onManterCompra, onGetIntencoes }) {
+  const [form, setForm] = useState(FORM_VAZIO)
+  const [colapsado, setColapsado] = useState(false)
   const [intencaoAtual, setIntencaoAtual] = useState(null)
   const [matches, setMatches] = useState([])
   const [quantidades, setQuantidades] = useState({})
@@ -161,6 +203,10 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
   }
 
   async function criar(dadosForm) {
+    // A ordem conta a história: o formulário colapsa na hora, o skeleton entra
+    // enquanto o mock "varre o estoque" (~700ms), e só então os resultados chegam.
+    setColapsado(true)
+    setIntencaoAtual(null); setMatches([])
     setCarregandoForm(true); setErroMsg(null); setMsgOk(null); setMostrarMotivo(false)
     try {
       const { intencao, matches: novosMatches } = await onCriarIntencao({ ...dadosForm, secretaria_id: usuario.secretaria_id })
@@ -170,13 +216,25 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
       await carregarMinhasIntencoes()
     } catch (e) {
       setErroMsg(e.message)
+      setColapsado(false) // erro devolve o formulário para correção
     } finally {
       setCarregandoForm(false)
     }
   }
 
+  function editar() {
+    // Reabre o formulário preenchido; os resultados saem de cena porque valem
+    // para a busca anterior, não para a que está sendo editada.
+    setColapsado(false)
+    setIntencaoAtual(null); setMatches([])
+    setMsgOk(null); setErroMsg(null); setMostrarMotivo(false)
+  }
+
   async function rever(intencao) {
     setErroMsg(null); setMsgOk(null); setMostrarMotivo(false)
+    // O resumo colapsado passa a descrever a intenção revisitada
+    setForm({ descricao: intencao.descricao, categoria_id: String(intencao.categoria_id), quantidade: String(intencao.quantidade), catmat: intencao.catmat_code || '' })
+    setColapsado(true)
     setIntencaoAtual(intencao)
     const novosMatches = await onGetMatches(intencao.id)
     setMatches(novosMatches)
@@ -224,13 +282,20 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <FormularioIntencao categorias={categorias} enviando={carregandoForm} onCriar={criar} />
+      <FormularioIntencao
+        categorias={categorias}
+        form={form} setForm={setForm}
+        colapsado={colapsado} onEditar={editar}
+        enviando={carregandoForm} onCriar={criar}
+      />
 
       {erroMsg && (
         <div style={{ ...card, padding: 12, borderColor: theme.color.danger, color: theme.color.danger, fontSize: 14, fontWeight: 600 }}>
           {erroMsg}
         </div>
       )}
+
+      {carregandoForm && <SkeletonBusca />}
 
       {intencaoAtual && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

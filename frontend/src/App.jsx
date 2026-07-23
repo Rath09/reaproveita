@@ -147,8 +147,16 @@ export default function App() {
         </div>
       </header>
 
-      {/* Faixa de KPIs — a assinatura do produto: dinheiro público que deixou de ser gasto */}
-      <div style={{ background: theme.color.surface, borderBottom: `1px solid ${theme.color.line}` }}>
+      {/* Faixa de KPIs — a assinatura do produto: dinheiro público que deixou de ser gasto.
+          Some na aba de interceptação: ali o foco é a busca, e o número de economia da
+          faixa competiria com o do resultado. Colapso por max-height para a transição
+          ser suave, sem pulo de layout. */}
+      <div style={{
+        background: theme.color.surface, borderBottom: `1px solid ${theme.color.line}`,
+        maxHeight: aba === 'interceptacao' ? 0 : 140, opacity: aba === 'interceptacao' ? 0 : 1,
+        overflow: 'hidden', transition: 'max-height 260ms ease, opacity 200ms ease',
+        borderBottomWidth: aba === 'interceptacao' ? 0 : 1,
+      }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', padding: '16px 20px', display: 'flex', gap: 36, flexWrap: 'wrap' }}>
           <Stat big label="Compras evitadas" value={kpis ? brl(kpis.compras_evitadas_valor) : '—'} />
           <Stat label="Itens transferidos" value={kpis ? kpis.itens_transferidos : '—'} />

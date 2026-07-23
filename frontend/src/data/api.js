@@ -304,7 +304,9 @@ export async function criarIntencao({ descricao, categoria_id, quantidade, catma
   if (real('criarIntencao'))
     return http('/intencoes', { method: 'POST', body: { descricao, categoria_id, quantidade, catmat_code } })
 
-  await espera()
+  // Mais lenta que as demais de propósito: dá tempo do skeleton contar a história
+  // de "varrendo o estoque das secretarias" (Bloco 5).
+  await espera(700)
   const intencao = {
     id: proximoIdInt++, secretaria_id, descricao, categoria_id, quantidade,
     catmat_code, status: 'aberta', quantidade_atendida: 0,
