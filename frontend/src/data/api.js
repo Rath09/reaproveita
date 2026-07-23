@@ -362,35 +362,89 @@ export async function getIntencoes({ secretaria_id = null } = {}) {
   return [...lista].sort((a, b) => b.id - a.id)
 }
 
-// =============================== KPIs ===============================
+// ====================== KPIs e agregação do programa ======================
 
-// Payload completo do §7 — usado tanto pelo painel autenticado quanto pelo público
-function calcularKpisMock() {
-  const transferidas = requisicoes.filter((r) => r.status === 'transferida')
-  const compras_evitadas_valor = transferidas.reduce(
-    (soma, r) => soma + economiaDe(itens.find((i) => i.id === r.item_id), r.quantidade),
-    0,
-  )
-  const intencoes_total = intencoes.length
-  const intencoes_convertidas = intencoes.filter((i) => i.status === 'convertida').length
-  return {
-    compras_evitadas_valor,
+// UMA função agrega o seed para tudo que exibe número: KPIs do header, KPIs do
+// painel público e os gráficos. Filtros opcionais (categoria e período em dias)
+// recalculam o conjunto inteiro — por construção, app interno e painel público
+// nunca divergem: são a mesma agregação com filtros vazios.
+function agregarPrograma({ categoria_id = null, periodo_dias = null } = {}) {
+  const cat = categoria_id ? Number(categoria_id) : null
+  const corte = periodo_dias ? new Date(Date.now() - periodo_dias * 86400000).toISOString() : null
+
+  const itemDe = (r) => itens.find((i) => i.id === r.item_id)
+  const transferidas = requisicoes.filter((r) =>
+    r.status === 'transferida' &&
+    (!corte || r.atualizado_em >= corte) &&
+    (!cat || itemDe(r).categoria_id === cat))
+  const intencoesFiltradas = intencoes.filter((i) =>
+    (!corte || i.criado_em >= corte) && (!cat || i.categoria_id === cat))
+
+  const kpis = {
+    compras_evitadas_valor: transferidas.reduce((s, r) => s + economiaDe(itemDe(r), r.quantidade), 0),
     itens_transferidos: transferidas.reduce((s, r) => s + r.quantidade, 0),
     requisicoes_concluidas: transferidas.length,
-    intencoes_total,
-    intencoes_convertidas,
-    taxa_interceptacao: intencoes_total ? intencoes_convertidas / intencoes_total : 0,
+    intencoes_total: intencoesFiltradas.length,
+    intencoes_convertidas: intencoesFiltradas.filter((i) => i.status === 'convertida').length,
+  }
+  kpis.taxa_interceptacao = kpis.intencoes_total ? kpis.intencoes_convertidas / kpis.intencoes_total : 0
+
+  // --- por secretaria: economia de quem evitou a compra e fluxo enviado × recebido (R$) ---
+  const porSecretaria = SECRETARIAS.map((s) => {
+    const recebidos = transferidas.filter((r) => r.secretaria_solicitante_id === s.id)
+      .reduce((soma, r) => soma + economiaDe(itemDe(r), r.quantidade), 0)
+    const enviados = transferidas.filter((r) => itemDe(r).secretaria_id === s.id)
+      .reduce((soma, r) => soma + economiaDe(itemDe(r), r.quantidade), 0)
+    return { sigla: s.sigla, nome: s.nome, economia: recebidos, enviados, recebidos }
+  })
+
+  // --- economia acumulada por semana, na janela do filtro (padrão: 90 dias) ---
+  const janelaDias = periodo_dias || 90
+  const inicio = new Date(Date.now() - janelaDias * 86400000)
+  const semanas = []
+  for (let t = inicio.getTime(); t <= Date.now(); t += 7 * 86400000) {
+    const fim = new Date(Math.min(t + 7 * 86400000, Date.now()))
+    semanas.push({ de: new Date(t), ate: fim })
+  }
+  let acumulado = 0
+  const economiaSemanal = semanas.map(({ de, ate }) => {
+    const daSemana = transferidas.filter((r) => r.atualizado_em >= de.toISOString() && r.atualizado_em < ate.toISOString())
+    acumulado += daSemana.reduce((s, r) => s + economiaDe(itemDe(r), r.quantidade), 0)
+    return { semana: ate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), economia: acumulado }
+  })
+
+  // --- patrimônio × material de consumo: quem tem nº de patrimônio é bem durável ---
+  const patrimonio = transferidas.filter((r) => itemDe(r).patrimonio)
+    .reduce((s, r) => s + economiaDe(itemDe(r), r.quantidade), 0)
+  const consumo = kpis.compras_evitadas_valor - patrimonio
+
+  return {
+    kpis,
+    economiaPorSecretaria: porSecretaria.filter((s) => s.economia > 0).sort((a, b) => b.economia - a.economia),
+    fluxoPorSecretaria: porSecretaria,
+    economiaSemanal,
+    patrimonioConsumo: [
+      { nome: 'Patrimônio', valor: patrimonio },
+      { nome: 'Material de consumo', valor: consumo },
+    ],
   }
 }
 
 export async function getKpis() {
   if (real('getKpis')) return http('/kpis')
   await espera(80)
-  return calcularKpisMock()
+  return agregarPrograma().kpis
 }
 
 export async function getKpisPublico() {
   if (real('getKpisPublico')) return http('/publico/kpis')
   await espera(80)
-  return calcularKpisMock()
+  return agregarPrograma().kpis
+}
+
+// Painel de transparência (§7): KPIs + gráficos, com filtros
+export async function getPainelPublico(filtros = {}) {
+  if (real('getPainelPublico')) return http('/publico/painel', { query: filtros })
+  await espera(120)
+  return agregarPrograma(filtros)
 }

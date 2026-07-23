@@ -15,7 +15,6 @@ import PainelPublicoView from './features/publico/PainelPublicoView.jsx'
 export default function App() {
   // Rota pública por hash (#/publico) — não exige login, checada antes do guard
   const [rota, setRota] = useState(window.location.hash)
-  const [kpisPublico, setKpisPublico] = useState(null)
 
   // Sessão persistida: recarregar a página mantém o usuário logado
   const [usuario, setUsuario] = useState(() => getSessao()?.usuario || null)
@@ -35,11 +34,6 @@ export default function App() {
     window.addEventListener('hashchange', aoMudarHash)
     return () => window.removeEventListener('hashchange', aoMudarHash)
   }, [])
-
-  useEffect(() => {
-    if (rota !== '#/publico') return
-    api.getKpisPublico().then(setKpisPublico)
-  }, [rota])
 
   // Token expirado/inválido em qualquer chamada (401): volta para o login
   useEffect(() => {
@@ -80,7 +74,7 @@ export default function App() {
     setItens([]); setRequisicoes([]); setKpis(null)
   }
 
-  if (rota === '#/publico') return <PainelPublicoView kpis={kpisPublico} />
+  if (rota === '#/publico') return <PainelPublicoView /> // busca os próprios dados (KPIs + gráficos + filtros)
   if (!usuario) return <LoginView onEntrar={entrar} />
 
   async function requisitar(dados) {
