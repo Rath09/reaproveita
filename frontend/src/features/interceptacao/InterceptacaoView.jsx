@@ -128,7 +128,7 @@ function MatchCard({ match, intencaoAtual, secretarias, quantidade, setQuantidad
           {brl(match.economia_estimada)}
         </div>
         <div style={{ fontSize: 12, color: theme.color.inkSoft, fontVariantNumeric: 'tabular-nums' }}>
-          {brl(match.item.valor_unitario_estimado)}/un em estoque · {atende} un aproveitável(is)
+          {atende} × {brl(match.item.valor_unitario_estimado)}/{match.item.unidade} em estoque
         </div>
         <div style={{ fontSize: 11, color: theme.color.inkSoft, marginTop: 2 }}>
           Economia calculada pelo preço de referência do catálogo

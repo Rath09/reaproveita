@@ -76,7 +76,7 @@ export default function LoginView({ onEntrar }) {
 
         <p style={{ textAlign: 'center', fontSize: 12, color: theme.color.inkSoft, marginTop: 14 }}>
           {MOCK_TOTAL ? (
-            <>Demo: <strong>ana@pmf.sc.gov.br</strong> (Secretaria) ou <strong>carlos@pmf.sc.gov.br</strong> (Gestor) — qualquer senha</>
+            <>Demo: <strong>ana@pmf.sc.gov.br</strong> (Almoxarife · Saúde) ou <strong>carlos@pmf.sc.gov.br</strong> (Gestor · Educação) — qualquer senha</>
           ) : (
             <>Demonstração (seed): <strong>secretaria1@gmail.com</strong> ou <strong>gestor1@gmail.com</strong> · senha <strong>senha</strong></>
           )}
