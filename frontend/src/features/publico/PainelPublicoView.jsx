@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   AreaChart, Area, PieChart, Pie, Cell,
@@ -52,12 +52,24 @@ export default function PainelPublicoView() {
   const [filtros, setFiltros] = useState({ categoria_id: '', periodo_dias: '' })
 
   useEffect(() => { api.getCategorias().then(setCategorias) }, [])
-  useEffect(() => {
+
+  const buscar = useCallback(() => {
     api.getPainelPublico({
       categoria_id: filtros.categoria_id || null,
       periodo_dias: filtros.periodo_dias ? Number(filtros.periodo_dias) : null,
     }).then(setDados)
   }, [filtros])
+
+  useEffect(() => { buscar() }, [buscar])
+
+  // O painel abre em nova aba: quando o app interno (outra aba) grava uma transação
+  // no localStorage, o evento 'storage' chega aqui e o painel se atualiza sozinho —
+  // dá para deixá-lo num telão e ver os números subirem ao vivo durante a demo.
+  useEffect(() => {
+    const aoMudarEstado = (e) => { if (e.key === 'reaproveita.estado') buscar() }
+    window.addEventListener('storage', aoMudarEstado)
+    return () => window.removeEventListener('storage', aoMudarEstado)
+  }, [buscar])
 
   const k = dados?.kpis
 

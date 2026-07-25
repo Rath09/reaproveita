@@ -82,6 +82,12 @@ export default function App() {
     await recarregar()
   }
 
+  async function cadastrarItem(dados) {
+    // O item pertence à secretaria de quem cadastra; recarregar traz o catálogo com ele.
+    await api.criarItemOcioso({ ...dados, secretaria_id: usuario.secretaria_id })
+    await recarregar()
+  }
+
   async function decidir(id, acao, detalhes = null) {
     await api.atualizarRequisicao(id, acao, usuario, detalhes) // usuario assina o evento da trilha
     await recarregar()
@@ -168,6 +174,9 @@ export default function App() {
           <div style={cardKpi}>
             <Stat label="Requisições concluídas" value={kpis ? kpis.requisicoes_concluidas : '—'} />
           </div>
+          <div style={cardKpi} title="Patrimônio parado no catálogo, à disposição das secretarias">
+            <Stat label="Ocioso disponível" value={kpis ? brl(kpis.valor_ocioso_disponivel) : '—'} />
+          </div>
         </div>
       </div>
 
@@ -188,6 +197,7 @@ export default function App() {
             filtro={filtro}
             setFiltro={setFiltro}
             onRequisitar={requisitar}
+            onCadastrarItem={cadastrarItem}
           />
         ) : aba === 'requisicoes' ? (
           <RequisicoesView

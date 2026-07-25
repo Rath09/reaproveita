@@ -15,12 +15,62 @@ import { salvarSessao, limparSessao } from './sessao.js'
 const FUNCOES_REAIS = new Set(['login', 'getItens', 'criarItem', 'getRequisicoes', 'criarRequisicao', 'atualizarRequisicao'])
 const real = (fn) => !MOCK_TOTAL && (USAR_API || FUNCOES_REAIS.has(fn))
 
-// Estado em memória (cópia mutável dos seeds)
-let itens = ITENS.map((i) => ({ ...i }))
-let requisicoes = REQUISICOES.map((r) => ({ ...r, eventos: r.eventos.map((e) => ({ ...e })) }))
-let proximoIdReq = requisicoes.length + 1
-let intencoes = INTENCOES.map((i) => ({ ...i }))
-let proximoIdInt = intencoes.length + 1
+// ---- estado da demo persistido em localStorage (todas as abas veem o mesmo) ----
+// Sem back, o estado vive no navegador. Persistir resolve dois problemas de demo:
+// o painel público, que abre em nova aba, passa a refletir as transações feitas no
+// app interno; e um reload acidental no meio da gravação não zera nada. SEED_VERSAO
+// invalida o cache quando o seed muda no código, para um deploy novo não servir
+// dados velhos. As fotos de itens cadastrados (data URL) cabem no mesmo JSON.
+const CHAVE_ESTADO = 'reaproveita.estado'
+const SEED_VERSAO = 1
+
+const clonar = (v) => JSON.parse(JSON.stringify(v))
+
+function estadoSeed() {
+  return {
+    versao: SEED_VERSAO,
+    itens: clonar(ITENS),
+    requisicoes: clonar(REQUISICOES),
+    intencoes: clonar(INTENCOES),
+    proximoIdReq: REQUISICOES.length + 1,
+    proximoIdInt: INTENCOES.length + 1,
+    proximoIdItem: Math.max(...ITENS.map((i) => i.id)) + 1,
+  }
+}
+
+function carregarEstado() {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE_ESTADO))
+    if (salvo && salvo.versao === SEED_VERSAO) return salvo
+  } catch { /* ausente ou corrompido: cai no seed */ }
+  return estadoSeed()
+}
+
+const _estado = carregarEstado()
+let itens = _estado.itens
+let requisicoes = _estado.requisicoes
+let intencoes = _estado.intencoes
+let proximoIdReq = _estado.proximoIdReq
+let proximoIdInt = _estado.proximoIdInt
+let proximoIdItem = _estado.proximoIdItem
+
+function persistir() {
+  try {
+    localStorage.setItem(CHAVE_ESTADO, JSON.stringify({
+      versao: SEED_VERSAO, itens, requisicoes, intencoes, proximoIdReq, proximoIdInt, proximoIdItem,
+    }))
+  } catch { /* localStorage cheio (foto grande?): segue só em memória nesta aba */ }
+}
+
+// Botão "Reiniciar dados da demo" (tela de login): volta ao seed e desloga, para
+// a gravação começar do zero em qualquer aba.
+export function resetarDemo() {
+  try {
+    localStorage.removeItem(CHAVE_ESTADO)
+    limparSessao()
+  } catch { /* ignore */ }
+  location.reload()
+}
 
 const espera = (ms = 250) => new Promise((res) => setTimeout(res, ms)) // simula rede
 
@@ -134,6 +184,45 @@ export async function criarItem(dadosItem) {
   throw erro('NAO_IMPLEMENTADO', 'Cadastro de item entra na integração com o back.')
 }
 
+// Cadastro de item ocioso pela própria secretaria (Bloco 3.5). Entra no catálogo na
+// hora, fica disponível para interceptação/transferência e passa a contar nos KPIs
+// quando transferido — é dado de primeira classe, persistido como o resto.
+// `secretaria_id` vem do usuário logado (o item pertence à secretaria dele).
+export async function criarItemOcioso({
+  nome, descricao = '', categoria_id, unidade = 'un', quantidade,
+  estado_conservacao = 'bom', patrimonio = null, valor_unitario_estimado,
+  paradoDesdeMeses = null, imageUrl = null, secretaria_id,
+}) {
+  if (real('criarItemOcioso')) return http('/itens', { method: 'POST', body: { nome, descricao, categoria_id, unidade, quantidade, estado_conservacao, patrimonio, valor_unitario_estimado, paradoDesdeMeses } })
+
+  await espera()
+  if (!nome?.trim()) throw erro('VALIDACAO', 'Informe o nome do item.')
+  if (!categoria_id) throw erro('VALIDACAO', 'Escolha a categoria.')
+  if (!(Number(quantidade) >= 1)) throw erro('VALIDACAO', 'Quantidade deve ser ao menos 1.')
+  if (!(Number(valor_unitario_estimado) > 0)) throw erro('VALIDACAO', 'Informe o preço de referência.')
+
+  const novo = {
+    id: proximoIdItem++,
+    nome: nome.trim(),
+    descricao: descricao.trim(),
+    patrimonio: patrimonio?.trim() || null, // vazio = material de consumo
+    categoria_id: Number(categoria_id),
+    secretaria_id,
+    quantidade: Number(quantidade),
+    quantidade_reservada: 0,
+    estado_conservacao,
+    valor_unitario_estimado: Number(valor_unitario_estimado),
+    unidade: unidade.trim() || 'un',
+    paradoDesdeMeses: paradoDesdeMeses ?? null,
+    imageUrl: imageUrl || null,
+    catmat_code: null,
+    criado_em: new Date().toISOString(),
+  }
+  itens.push(novo)
+  persistir()
+  return derivar(novo)
+}
+
 // ============================ REQUISIÇÕES ============================
 
 export async function getRequisicoes({ secretaria_solicitante_id = null, status = '' } = {}) {
@@ -179,6 +268,7 @@ function criarRequisicaoMock({ item_id, quantidade, justificativa, secretaria_so
   }
   registrarEvento(nova, 'solicitada', solicitante ?? { ...ATORES[secretaria_solicitante_id].almoxarife, papel: 'secretaria', secretaria_id: secretaria_solicitante_id })
   requisicoes.push(nova)
+  persistir()
   return nova
 }
 
@@ -241,6 +331,7 @@ export async function atualizarRequisicao(id, acao, usuario = null, detalhes = n
   const TIPO_EVENTO = { aprovar: 'aprovada', recusar: 'recusada', agendar_retirada: 'retirada_agendada', confirmar_saida: 'saida_confirmada', confirmar_recebimento: 'recebimento_confirmado' }
   if (usuario) registrarEvento(req, TIPO_EVENTO[acao], usuario, detalhes)
   req.atualizado_em = new Date().toISOString()
+  persistir()
   return { ...req }
 }
 
@@ -313,6 +404,7 @@ export async function criarIntencao({ descricao, categoria_id, quantidade, catma
     motivo_compra: null, criado_em: new Date().toISOString(),
   }
   intencoes.push(intencao)
+  persistir()
   return { intencao, matches: calcularMatches(intencao) }
 }
 
@@ -339,6 +431,7 @@ export async function converterIntencao(intencaoId, item_id, quantidade) {
   })
   intencao.quantidade_atendida += quantidade
   if (intencao.quantidade_atendida >= intencao.quantidade) intencao.status = 'convertida'
+  persistir() // criarRequisicaoMock já persistiu a requisição; aqui grava a intenção mutada
   return requisicao
 }
 
@@ -351,6 +444,7 @@ export async function manterCompra(intencaoId, motivo) {
   if (!intencao) throw erro('NAO_ENCONTRADO', 'Intenção não encontrada.')
   intencao.status = 'mantida_compra'
   intencao.motivo_compra = motivo
+  persistir()
   return { ...intencao }
 }
 
@@ -380,12 +474,20 @@ function agregarPrograma({ categoria_id = null, periodo_dias = null } = {}) {
   const intencoesFiltradas = intencoes.filter((i) =>
     (!corte || i.criado_em >= corte) && (!cat || i.categoria_id === cat))
 
+  // Patrimônio ocioso ainda no catálogo (não é economia realizada — é o potencial à
+  // disposição da rede). Cadastrar um item ocioso o aumenta na hora; período não se
+  // aplica (é estoque atual), categoria sim.
+  const valor_ocioso_disponivel = itens
+    .filter((i) => (i.paradoDesdeMeses ?? 0) >= 6 && (i.quantidade - i.quantidade_reservada) > 0 && (!cat || i.categoria_id === cat))
+    .reduce((s, i) => s + i.valor_unitario_estimado * (i.quantidade - i.quantidade_reservada), 0)
+
   const kpis = {
     compras_evitadas_valor: transferidas.reduce((s, r) => s + economiaDe(itemDe(r), r.quantidade), 0),
     itens_transferidos: transferidas.reduce((s, r) => s + r.quantidade, 0),
     requisicoes_concluidas: transferidas.length,
     intencoes_total: intencoesFiltradas.length,
     intencoes_convertidas: intencoesFiltradas.filter((i) => i.status === 'convertida').length,
+    valor_ocioso_disponivel,
   }
   kpis.taxa_interceptacao = kpis.intencoes_total ? kpis.intencoes_convertidas / kpis.intencoes_total : 0
 

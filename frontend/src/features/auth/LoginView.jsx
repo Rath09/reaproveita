@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { theme, card, btn, input } from '../../lib/theme.js'
 import { MOCK_TOTAL } from '../../data/http.js'
+import { resetarDemo } from '../../data/api.js'
 
 // Tela de login (contrato §2). Usuários vêm de seed — não há cadastro público no PoC.
 export default function LoginView({ onEntrar }) {
@@ -81,6 +82,19 @@ export default function LoginView({ onEntrar }) {
             <>Demonstração (seed): <strong>secretaria1@gmail.com</strong> ou <strong>gestor1@gmail.com</strong> · senha <strong>senha</strong></>
           )}
         </p>
+
+        {MOCK_TOTAL && (
+          <p style={{ textAlign: 'center', marginTop: 6 }}>
+            <button
+              type="button"
+              onClick={resetarDemo}
+              title="Volta ao estado inicial: descarta requisições e itens criados na demo"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.font, fontSize: 12, color: theme.color.cianoEscuro, textDecoration: 'underline' }}
+            >
+              Reiniciar dados da demo
+            </button>
+          </p>
+        )}
       </div>
     </div>
   )
