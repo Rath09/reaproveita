@@ -3,6 +3,11 @@ import { theme, card, btn, input, brl, rotuloEstado, rotuloStatusItem } from '..
 import { useDrawerAntiFechamento } from '../../lib/useDrawerAntiFechamento.js'
 import Badge from '../../components/Badge.jsx'
 import ItemImagem from '../../components/ItemImagem.jsx'
+import Lightbox from '../../components/Lightbox.jsx'
+
+// Fotos do item para o lightbox: hoje há uma (imageUrl); o array já suporta várias
+// se o seed passar a trazer `imagens`.
+const fotosDoItem = (item) => item.imagens?.length ? item.imagens : item.imageUrl ? [item.imageUrl] : []
 
 // A partir de 6 meses parado o item vira oportunidade de remanejamento — é o selo
 // que o almoxarife procura no catálogo.
@@ -109,12 +114,17 @@ function DrawerShell({ titulo, dirty, onFechar, children }) {
       {...backdropHandlers}
       style={{ position: 'fixed', inset: 0, background: 'rgba(28,35,33,.35)', display: 'flex', justifyContent: 'flex-end', zIndex: 50 }}
     >
-      <div style={{ width: 'min(460px, 100%)', background: theme.color.surface, height: '100%', padding: 24, overflowY: 'auto', fontFamily: theme.font }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>
+      {/* boxSizing border-box: sem ele, height 100% + padding somam além da viewport
+          e o painel transborda para fora da tela, deixando o conteúdo do fundo (e a
+          própria rolagem) inacessíveis. Header fixo no topo; só o corpo rola. */}
+      <div style={{ width: 'min(460px, 100%)', background: theme.color.surface, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontFamily: theme.font }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12, padding: '20px 24px 12px', borderBottom: `1px solid ${theme.color.line}` }}>
           <h2 style={{ margin: 0, fontSize: 20, color: theme.color.ink }}>{titulo}</h2>
           <button onClick={onFechar} aria-label="Fechar" title="Fechar" style={{ ...btn('quieto'), padding: '4px 12px', fontSize: 16, lineHeight: 1.2 }}>✕</button>
         </div>
-        {children({ avisoDescarte })}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px' }}>
+          {children({ avisoDescarte })}
+        </div>
       </div>
     </div>
   )
@@ -277,6 +287,8 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
   const [justificativa, setJustificativa] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [lightboxAberto, setLightboxAberto] = useState(false)
+  const fotos = fotosDoItem(item)
 
   const ehPropria = usuario.papel === 'secretaria' && item.secretaria_id === usuario.secretaria_id
   const podeRequisitar = usuario.papel === 'secretaria' && !ehPropria && item.saldo_livre > 0
@@ -304,9 +316,18 @@ function PainelItem({ item, usuario, secretarias, categorias, onRequisitar, onFe
     <DrawerShell titulo={item.nome} dirty={sujo} onFechar={onFechar}>
       {({ avisoDescarte }) => (
       <>
-      <div style={{ margin: '14px 0 12px' }}>
-        <ItemImagem item={item} radius={theme.radius.card} />
+      <div
+        onClick={() => fotos.length && setLightboxAberto(true)}
+        style={{ position: 'relative', marginBottom: 12, cursor: fotos.length ? 'zoom-in' : 'default' }}
+      >
+        <ItemImagem item={item} alturaFixa={200} radius={theme.radius.card} />
+        {fotos.length > 0 && (
+          <span style={{ position: 'absolute', right: 8, bottom: 8, background: 'rgba(13,44,84,.72)', color: '#fff', fontSize: 12, fontWeight: 600, padding: '3px 9px', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 4 }}>
+            ⤢ Ampliar{fotos.length > 1 ? ` · ${fotos.length} fotos` : ''}
+          </span>
+        )}
       </div>
+      {lightboxAberto && <Lightbox imagens={fotos} alt={item.nome} onClose={() => setLightboxAberto(false)} />}
 
       {estaOcioso(item) && (
         <div style={{ marginBottom: 10 }}>

@@ -405,7 +405,10 @@ export async function criarIntencao({ descricao, categoria_id, quantidade, catma
   }
   intencoes.push(intencao)
   persistir()
-  return { intencao, matches: calcularMatches(intencao) }
+  // Cópia: sem ela, o objeto devolvido é a MESMA referência guardada no estado do
+  // front; uma conversão posterior muta `quantidade_atendida` no array e o front
+  // contaria a quantidade duas vezes.
+  return { intencao: { ...intencao }, matches: calcularMatches(intencao) }
 }
 
 export async function getMatches(intencaoId) {
@@ -453,7 +456,9 @@ export async function getIntencoes({ secretaria_id = null } = {}) {
 
   await espera()
   const lista = secretaria_id ? intencoes.filter((i) => i.secretaria_id === secretaria_id) : intencoes
-  return [...lista].sort((a, b) => b.id - a.id)
+  // Cópias (mesmo motivo de criarIntencao): o front não pode guardar referências
+  // do array interno, que mutam a cada conversão.
+  return lista.map((i) => ({ ...i })).sort((a, b) => b.id - a.id)
 }
 
 // ====================== KPIs e agregação do programa ======================

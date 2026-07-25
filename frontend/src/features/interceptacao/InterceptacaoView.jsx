@@ -166,14 +166,69 @@ function LinhaIntencao({ intencao, onRever }) {
   )
 }
 
+// Ícone de sucesso do card de conversão
+function CheckSucesso() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="11" fill={theme.color.verdeEconomia} />
+      <path d="M7 12.5 L10.5 16 L17 8.5" stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Confirmação destacada depois que a intenção é 100% atendida — no lugar dos cards
+// de match (que já não fazem sentido: não há mais o que pedir). Mostra o que foi
+// requisitado, com foto, e leva ao próximo passo. Padrão de "pedido confirmado".
+function CardSucessoConversao({ resultado, secretarias, onNovaIntencao, onIrParaRequisicoes }) {
+  const { item, quantidade, requisicao, economia } = resultado
+  const dona = secretarias.find((s) => s.id === item.secretaria_id)
+  return (
+    <div style={{ ...card, padding: 0, overflow: 'hidden', border: `1px solid ${theme.color.verdeEconomia}` }}>
+      <div style={{ background: '#EAF5EF', padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <CheckSucesso />
+        <div>
+          <strong style={{ fontSize: 16, color: theme.color.verdeEconomiaDark }}>Requisição criada</strong>
+          <div style={{ fontSize: 13, color: theme.color.inkSoft }}>
+            Nº {requisicao.id} · aguardando aprovação da {dona?.sigla}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ width: 104, flexShrink: 0 }}>
+          <ItemImagem item={item} alturaFixa={104} radius={theme.radius.card} />
+        </div>
+        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+          <strong style={{ fontSize: 16, color: theme.color.ink }}>{item.nome}</strong>
+          <div style={{ fontSize: 13, color: theme.color.inkSoft, marginTop: 2 }}>
+            {quantidade} {item.unidade} · de {dona?.nome}
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: theme.color.inkSoft, marginTop: 10 }}>
+            Compra evitada
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: theme.color.verdeEconomia, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>
+            {brl(economia)}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, padding: '0 20px 20px', flexWrap: 'wrap' }}>
+        <button style={btn('primario')} onClick={onIrParaRequisicoes}>Ver em Minhas requisições</button>
+        <button style={btn('quieto')} onClick={onNovaIntencao}>Registrar outra intenção</button>
+      </div>
+    </div>
+  )
+}
+
 const FORM_VAZIO = { descricao: '', categoria_id: '', quantidade: '', catmat: '' }
 
-export default function InterceptacaoView({ categorias, secretarias, usuario, onCriarIntencao, onGetMatches, onConverter, onManterCompra, onGetIntencoes }) {
+export default function InterceptacaoView({ categorias, secretarias, usuario, onCriarIntencao, onGetMatches, onConverter, onManterCompra, onGetIntencoes, onIrParaRequisicoes }) {
   const [form, setForm] = useState(FORM_VAZIO)
   const [colapsado, setColapsado] = useState(false)
   const [intencaoAtual, setIntencaoAtual] = useState(null)
   const [matches, setMatches] = useState([])
   const [quantidades, setQuantidades] = useState({})
+  const [resultadoConversao, setResultadoConversao] = useState(null)
 
   const [carregandoForm, setCarregandoForm] = useState(false)
   const [erroMsg, setErroMsg] = useState(null)
@@ -207,7 +262,7 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
     // A ordem conta a história: o formulário colapsa na hora, o skeleton entra
     // enquanto o mock "varre o estoque" (~700ms), e só então os resultados chegam.
     setColapsado(true)
-    setIntencaoAtual(null); setMatches([])
+    setIntencaoAtual(null); setMatches([]); setResultadoConversao(null)
     setCarregandoForm(true); setErroMsg(null); setMsgOk(null); setMostrarMotivo(false)
     try {
       const { intencao, matches: novosMatches } = await onCriarIntencao({ ...dadosForm, secretaria_id: usuario.secretaria_id })
@@ -227,12 +282,12 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
     // Reabre o formulário preenchido; os resultados saem de cena porque valem
     // para a busca anterior, não para a que está sendo editada.
     setColapsado(false)
-    setIntencaoAtual(null); setMatches([])
+    setIntencaoAtual(null); setMatches([]); setResultadoConversao(null)
     setMsgOk(null); setErroMsg(null); setMostrarMotivo(false)
   }
 
   async function rever(intencao) {
-    setErroMsg(null); setMsgOk(null); setMostrarMotivo(false)
+    setErroMsg(null); setMsgOk(null); setMostrarMotivo(false); setResultadoConversao(null)
     // O resumo colapsado passa a descrever a intenção revisitada
     setForm({ descricao: intencao.descricao, categoria_id: String(intencao.categoria_id), quantidade: String(intencao.quantidade), catmat: intencao.catmat_code || '' })
     setColapsado(true)
@@ -251,9 +306,18 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
         ...intencaoAtual,
         quantidade_atendida: intencaoAtual.quantidade_atendida + quantidade,
       }
-      if (intencaoAtualizada.quantidade_atendida >= intencaoAtualizada.quantidade) intencaoAtualizada.status = 'convertida'
+      const atendida = intencaoAtualizada.quantidade_atendida >= intencaoAtualizada.quantidade
+      if (atendida) intencaoAtualizada.status = 'convertida'
       setIntencaoAtual(intencaoAtualizada)
-      setMsgOk(`Requisição #${requisicao.id} criada — acompanhe em Minhas requisições`)
+
+      // Intenção 100% atendida → card de confirmação no lugar dos matches; parcial →
+      // mantém a lista e a mensagem discreta para o restante.
+      if (atendida) {
+        setResultadoConversao({ item: match.item, quantidade, requisicao, economia: quantidade * match.item.valor_unitario_estimado })
+        setMsgOk(null)
+      } else {
+        setMsgOk(`Requisição nº ${requisicao.id} criada — faltam ${intencaoAtualizada.quantidade - intencaoAtualizada.quantidade_atendida} ${match.item.unidade} para atender a intenção`)
+      }
 
       const novosMatches = await onGetMatches(intencaoAtualizada.id)
       setMatches(novosMatches)
@@ -264,6 +328,13 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
     } finally {
       setConvertendoId(null)
     }
+  }
+
+  // "Registrar outra intenção" a partir do card de sucesso: volta ao formulário limpo.
+  function novaIntencao() {
+    setForm(FORM_VAZIO); setColapsado(false)
+    setIntencaoAtual(null); setMatches([]); setResultadoConversao(null)
+    setMsgOk(null); setErroMsg(null); setMostrarMotivo(false)
   }
 
   async function registrarMotivo() {
@@ -301,58 +372,80 @@ export default function InterceptacaoView({ categorias, secretarias, usuario, on
       {intencaoAtual && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <h2 style={{ margin: 0, fontSize: 18, color: theme.color.ink }}>
-            Resultados para “{intencaoAtual.descricao}”
+            {intencaoAtual.status === 'convertida' ? 'Intenção atendida' : `Resultados para “${intencaoAtual.descricao}”`}
           </h2>
 
-          {msgOk && (
-            <div style={{ ...card, padding: 12, color: theme.color.primaryDark, fontSize: 14, fontWeight: 600 }}>
-              {msgOk}
-            </div>
-          )}
-
-          {(() => {
-            // Bloco de "manter compra": registra motivo quando a secretaria segue com a aquisição.
-            // CONTRATO_API.md §3.5 exige a trilha de auditoria TAMBÉM quando há item disponível — por isso
-            // aparece nos dois ramos (com e sem matches), não só quando a lista vem vazia.
-            if (intencaoAtual.status === 'mantida_compra') return null
-            const rotuloBotao = matches.length === 0
-              ? 'Registrar compra mesmo assim'
-              : 'Comprar mesmo assim (justificar)'
-            return mostrarMotivo ? (
-              <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <label style={rotulo}>
-                  Motivo da compra
-                  <textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)}
-                    placeholder="Por que a compra segue necessária mesmo havendo item no catálogo" style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }} />
-                </label>
-                <button style={btn('primario')} disabled={enviandoMotivo || !motivo.trim()} onClick={registrarMotivo}>
-                  {enviandoMotivo ? 'Registrando…' : 'Confirmar'}
-                </button>
-              </div>
+          {intencaoAtual.status === 'convertida' ? (
+            // Intenção 100% atendida: confirmação no lugar dos matches. Se veio de
+            // "Rever matches" (sem resultado desta sessão), um aviso mais simples.
+            resultadoConversao ? (
+              <CardSucessoConversao
+                resultado={resultadoConversao}
+                secretarias={secretarias}
+                onNovaIntencao={novaIntencao}
+                onIrParaRequisicoes={onIrParaRequisicoes}
+              />
             ) : (
-              <button style={{ ...btn('quieto'), alignSelf: 'flex-start' }} onClick={() => setMostrarMotivo(true)}>
-                {rotuloBotao}
-              </button>
+              <div style={{ ...card, padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CheckSucesso />
+                <div style={{ fontSize: 14, color: theme.color.ink }}>
+                  Esta intenção já foi atendida. Acompanhe a requisição em <strong>Minhas requisições</strong>.
+                </div>
+              </div>
             )
-          })()}
-
-          {matches.length === 0 ? (
-            vazio('Nenhum item compatível no momento.')
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-              {matches.map((m) => (
-                <MatchCard
-                  key={m.item.id}
-                  match={m}
-                  intencaoAtual={intencaoAtual}
-                  secretarias={secretarias}
-                  quantidade={quantidades[m.item.id] ?? 1}
-                  setQuantidade={(itemId, valor) => setQuantidades((q) => ({ ...q, [itemId]: valor }))}
-                  convertendo={convertendoId === m.item.id}
-                  onConverter={() => converter(m)}
-                />
-              ))}
-            </div>
+            <>
+              {msgOk && (
+                <div style={{ ...card, padding: 12, color: theme.color.primaryDark, fontSize: 14, fontWeight: 600 }}>
+                  {msgOk}
+                </div>
+              )}
+
+              {(() => {
+                // Bloco de "manter compra": registra motivo quando a secretaria segue com a aquisição.
+                // CONTRATO_API.md §3.5 exige a trilha de auditoria TAMBÉM quando há item disponível — por isso
+                // aparece nos dois ramos (com e sem matches), não só quando a lista vem vazia.
+                if (intencaoAtual.status === 'mantida_compra') return null
+                const rotuloBotao = matches.length === 0
+                  ? 'Registrar compra mesmo assim'
+                  : 'Comprar mesmo assim (justificar)'
+                return mostrarMotivo ? (
+                  <div style={{ ...card, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <label style={rotulo}>
+                      Motivo da compra
+                      <textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)}
+                        placeholder="Por que a compra segue necessária mesmo havendo item no catálogo" style={{ ...input, width: '100%', marginTop: 4, resize: 'vertical' }} />
+                    </label>
+                    <button style={btn('primario')} disabled={enviandoMotivo || !motivo.trim()} onClick={registrarMotivo}>
+                      {enviandoMotivo ? 'Registrando…' : 'Confirmar'}
+                    </button>
+                  </div>
+                ) : (
+                  <button style={{ ...btn('quieto'), alignSelf: 'flex-start' }} onClick={() => setMostrarMotivo(true)}>
+                    {rotuloBotao}
+                  </button>
+                )
+              })()}
+
+              {matches.length === 0 ? (
+                vazio('Nenhum item compatível no momento.')
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+                  {matches.map((m) => (
+                    <MatchCard
+                      key={m.item.id}
+                      match={m}
+                      intencaoAtual={intencaoAtual}
+                      secretarias={secretarias}
+                      quantidade={quantidades[m.item.id] ?? 1}
+                      setQuantidade={(itemId, valor) => setQuantidades((q) => ({ ...q, [itemId]: valor }))}
+                      convertendo={convertendoId === m.item.id}
+                      onConverter={() => converter(m)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

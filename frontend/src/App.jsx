@@ -216,6 +216,7 @@ export default function App() {
             onConverter={converterIntencao}
             onManterCompra={manterCompra}
             onGetIntencoes={listarMinhasIntencoes}
+            onIrParaRequisicoes={() => setAba('requisicoes')}
           />
         )}
       </main>
